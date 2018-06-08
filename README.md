@@ -26,13 +26,13 @@
 
 **WARNING!!!**
 ```
-This tool was written over just an hour or two. It is not intended for any other purpose than for people 
-to play around with EOS. 
+This tool was written over just an hour or two. It is not intended for any other purpose than for 
+people to play around with EOS. 
 
-Additionally, we are all pretty heads down working towards our products release schedules as well as those
-of our partners. As a result, unless we have the time, we will not be updating/maintaining/elaborating
-the tooling with any frequency or cadance. That being said, we will peek in on it from time to time to see 
-whats happening with it.
+Additionally, we are all pretty heads down working towards our products release schedules as well as 
+those of our partners. As a result, unless we have the time, we will not be 
+updating/maintaining/elaborating the tooling with any frequency or cadance. That being said, we will
+peek in on it from time to time to see whats happening with it.
 
 If you are someone who is vested in making this tool better please fork it and let us know.
 ```
