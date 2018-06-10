@@ -68,6 +68,7 @@ class Order():
     to = ""
     amount = 0.0000
     contract = ""
+    currency = ""
     
 class Dialog(QtGui.QDialog):
     
@@ -130,7 +131,7 @@ class Dialog(QtGui.QDialog):
 
         self.issueLabel = QtGui.QLabel()
         self.issueLabel.setFrameStyle(frameStyle)
-        self.issueButton = QtGui.QPushButton("Issue VTX")
+        self.issueButton = QtGui.QPushButton("Issue" + Order.currency)
 
         self.recipientNameLabel = QtGui.QLabel()
         self.recipientNameLabel.setFrameStyle(frameStyle)
@@ -143,7 +144,11 @@ class Dialog(QtGui.QDialog):
         self.issueToAccountLabel = QtGui.QLabel()
         self.issueToAccountLabel.setFrameStyle(frameStyle)
         self.issueToAccountButton = QtGui.QPushButton("Send to receiving account")
-
+        
+        self.chooseCurrencyLabel = QtGui.QLabel()
+        self.chooseCurrencyLabel.setFrameStyle(frameStyle)
+        self.chooseCurrencyButton = QtGui.QPushButton("Set Token Name")
+        
 
         self.stopButton.clicked.connect(self.stopChain)
         self.startButton.clicked.connect(self.startChain)
@@ -162,9 +167,10 @@ class Dialog(QtGui.QDialog):
         self.amountButton.clicked.connect(self.setAmount)
         self.recipientNameButton.clicked.connect(self.setRecipientName)
         self.issueToAccountButton.clicked.connect(self.issueToAccount)
+        self.chooseCurrencyButton.clicked.connect(self.chooseCurrency)
          
         self.native = QtGui.QCheckBox()
-        self.native.setText("Create VTX Token")
+        self.native.setText("Create Token")
         self.native.setChecked(True)
         if sys.platform not in ("win32", "darwin"):
             self.native.hide()
@@ -190,27 +196,29 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.openContractLabel, 7, 1)
         layout.addWidget(self.openFileNameButton, 8, 0)
         layout.addWidget(self.openFileNameLabel, 8, 1)
-        layout.addWidget(self.issueButton, 9, 0)
-        layout.addWidget(self.issueLabel, 9, 1)
-        layout.addWidget(self.recipientNameLabel, 10, 1)
-        layout.addWidget(self.recipientNameButton, 10, 0)
-        layout.addWidget(self.amountLabel, 11, 1)
-        layout.addWidget(self.amountButton, 11, 0)
-        layout.addWidget(self.issueToAccountButton, 12, 0)
-        layout.addWidget(self.issueToAccountLabel, 12, 1)
-        layout.addWidget(self.restartButton, 16, 0)
-        layout.addWidget(self.restartLabel, 16, 1)
-        layout.addWidget(self.startLabel, 17, 1)
-        layout.addWidget(self.startButton, 17, 0)
-        layout.addWidget(self.stopLabel, 18, 1)
-        layout.addWidget(self.stopButton, 18, 0)
-        layout.addWidget(self.flushButton, 19, 0)
-        layout.addWidget(self.flushLabel, 19, 1)
+        layout.addWidget(self.chooseCurrencyButton, 9, 0)
+        layout.addWidget(self.chooseCurrencyLabel, 9, 1)
+        layout.addWidget(self.issueButton, 10, 0)
+        layout.addWidget(self.issueLabel, 10, 1)
+        layout.addWidget(self.recipientNameLabel, 11, 1)
+        layout.addWidget(self.recipientNameButton, 11, 0)
+        layout.addWidget(self.amountLabel, 12, 1)
+        layout.addWidget(self.amountButton, 12, 0)
+        layout.addWidget(self.issueToAccountButton, 13, 0)
+        layout.addWidget(self.issueToAccountLabel, 13, 1)
+        layout.addWidget(self.restartButton, 14, 0)
+        layout.addWidget(self.restartLabel, 14, 1)
+        layout.addWidget(self.startLabel, 15, 1)
+        layout.addWidget(self.startButton, 15, 0)
+        layout.addWidget(self.stopLabel, 16, 1)
+        layout.addWidget(self.stopButton, 16, 0)
+        layout.addWidget(self.flushButton, 17, 0)
+        layout.addWidget(self.flushLabel, 17, 1)
       
         
         self.setLayout(layout)
 
-        self.setWindowTitle("Create VTX Token")
+        self.setWindowTitle("Create Token")
     
     def stopChain(self):
         flushAllFields(self)
@@ -310,11 +318,22 @@ class Dialog(QtGui.QDialog):
         out = subprocess.check_output(['cleos', 'set', 'contract', Account.name,  Order.contract, '-p', Account.name ])
         self.openFileNameLabel.setText(out)
 
+    def chooseCurrency(self):
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Token name:", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            Order.currency = ' ' + text
+            self.chooseCurrencyLabel.setText(text)     
+
+    
     def issueCurrency(self):
         token1 = '{"issuer": "'
         token2 = Account.name
-        token3 = '", "maximum_supply": "100000.0000 VTX", "can_freeze": 1, "can_recall": 1, "can_whitelist": 1}'
-        finalToken = token1 + token2 + token3
+        token3 = '", "maximum_supply": "1000000.0000 '
+        token4 = Order.currency
+        token5 = '", "can_freeze": 1, "can_recall": 1, "can_whitelist": 1}'
+        finalToken = token1 + token2 + token3 + token4 + token5
         print(finalToken)
         out = subprocess.check_output(['cleos', 'push', 'action', Account.name, 'create', finalToken, '-p', Account.name + '@active']) 
         self.issueLabel.setText(out)
@@ -332,8 +351,8 @@ class Dialog(QtGui.QDialog):
                 "Amount:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
-            Order.amount = text + ' VTX'
-            self.amountLabel.setText(text + ' VTX')     
+            Order.amount = text + Order.currency
+            self.amountLabel.setText(text + Order.amount)     
     
     def issueToAccount(self):
         #cleos push action eosio.token issue '{"to": "scott", "quantity": "900.0000 EOS", "memo": "testing"}' -p eosio.token@active
