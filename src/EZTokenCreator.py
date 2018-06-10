@@ -171,7 +171,12 @@ class Dialog(QtGui.QDialog):
         self.chooseCurrencyLabel.setFrameStyle(frameStyle)
         self.chooseCurrencyButton = QtGui.QPushButton("Set Token Name")
         
+        self.getInfoLabel = QtGui.QLabel()
+        self.getInfoLabel.setFrameStyle(frameStyle)
+        self.getInfoButton = QtGui.QPushButton("GetInfo")
+        
 
+        self.getInfoButton.clicked.connect(self.getInfo)
         self.stopButton.clicked.connect(self.stopChain)
         self.startButton.clicked.connect(self.startChain)
         self.restartButton.clicked.connect(self.resetChain)    
@@ -236,6 +241,8 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.stopButton, 16, 0)
         layout.addWidget(self.flushButton, 17, 0)
         layout.addWidget(self.flushLabel, 17, 1)
+        layout.addWidget(self.getInfoButton, 18, 0)
+        layout.addWidget(self.getInfoLabel, 18, 1)
       
         
         self.setLayout(layout)
@@ -391,6 +398,10 @@ class Dialog(QtGui.QDialog):
         flushAllFields(self)
         subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
         self.flushLabel.setText("Deleted wallets")
+        
+    def getInfo(self):
+        out = subprocess.check_output(['cleos', 'get', 'info'])
+        self.getInfoLabel.setText(out)
     
 def flushAllFields(self): 
         self.stopLabel.setText("") 
