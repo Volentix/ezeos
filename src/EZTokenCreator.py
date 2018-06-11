@@ -97,7 +97,8 @@ class Dialog(QtGui.QDialog):
     def __init__(self, parent=None):
         super(Dialog, self).__init__(parent)
 
-        frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.Panel
+        frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
+        self.setMinimumSize(1280, 1024)
 
         self.openContractLabel = QtGui.QLabel()
         self.openContractLabel.setFrameStyle(frameStyle)
@@ -175,7 +176,12 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setFrameStyle(frameStyle)
         self.getInfoButton = QtGui.QPushButton("GetInfo")
         
+    
+        self.getAccountDetailsButton = QtGui.QPushButton("Get Account Details")
+        
+        
 
+        self.getAccountDetailsButton.clicked.connect(self.getAccountDetails)
         self.getInfoButton.clicked.connect(self.getInfo)
         self.stopButton.clicked.connect(self.stopChain)
         self.startButton.clicked.connect(self.startChain)
@@ -203,43 +209,44 @@ class Dialog(QtGui.QDialog):
             self.native.hide()
 
         layout = QtGui.QGridLayout()
-        layout.setColumnStretch(1, 1)
-        layout.setColumnMinimumWidth(1, 250)
+        
         layout.addWidget(self.setWalletNameButton, 0, 0)
         layout.addWidget(self.setWalletNameLabel, 0, 1)
-        layout.addWidget(self.createWalletButton, 1, 0)
-        layout.addWidget(self.createWalletLabel, 1, 1)
+        layout.addWidget(self.createWalletButton, 0, 2)
+        layout.addWidget(self.createWalletLabel, 0, 3)
         layout.addWidget(self.setOwnerKeyButton, 2, 0)
         layout.addWidget(self.setOwnerKeyLabel, 2, 1)
-        layout.addWidget(self.setActiveKeyButton, 3, 0)
-        layout.addWidget(self.setActiveKeyLabel, 3, 1)
+        layout.addWidget(self.setActiveKeyButton, 2, 2)
+        layout.addWidget(self.setActiveKeyLabel, 2, 3)
         layout.addWidget(self.importPrivateKeysButton, 4, 0)
         layout.addWidget(self.importPrivateKeysLabel, 4, 1)
-        layout.addWidget(self.setAccountNameButton, 5, 0)
-        layout.addWidget(self.setAccountNameLabel, 5, 1)
+        layout.addWidget(self.setAccountNameButton, 4, 2)
+        layout.addWidget(self.setAccountNameLabel, 4, 3)
         layout.addWidget(self.createAccountButton, 6, 0)
         layout.addWidget(self.createAccountLabel, 6, 1)
-        layout.addWidget(self.openContractButton, 7, 0)
-        layout.addWidget(self.openContractLabel, 7, 1)
+        layout.addWidget(self.openContractButton, 6, 2)
+        layout.addWidget(self.openContractLabel, 6, 3)
         layout.addWidget(self.openFileNameButton, 8, 0)
         layout.addWidget(self.openFileNameLabel, 8, 1)
-        layout.addWidget(self.chooseCurrencyButton, 9, 0)
-        layout.addWidget(self.chooseCurrencyLabel, 9, 1)
+        layout.addWidget(self.chooseCurrencyButton, 8, 2)
+        layout.addWidget(self.chooseCurrencyLabel, 8, 3)
         layout.addWidget(self.issueButton, 10, 0)
         layout.addWidget(self.issueLabel, 10, 1)
-        layout.addWidget(self.recipientNameLabel, 11, 1)
-        layout.addWidget(self.recipientNameButton, 11, 0)
+        layout.addWidget(self.recipientNameLabel, 10, 3)
+        layout.addWidget(self.recipientNameButton, 10, 2)
         layout.addWidget(self.amountLabel, 12, 1)
         layout.addWidget(self.amountButton, 12, 0)
-        layout.addWidget(self.issueToAccountButton, 13, 0)
-        layout.addWidget(self.issueToAccountLabel, 13, 1)
+        layout.addWidget(self.issueToAccountButton, 12, 2)
+        layout.addWidget(self.issueToAccountLabel, 12, 3)
+       
+        layout.addWidget(self.getAccountDetailsButton, 13, 0)
         layout.addWidget(self.restartButton, 14, 0)
         layout.addWidget(self.restartLabel, 14, 1)
         layout.addWidget(self.startLabel, 15, 1)
         layout.addWidget(self.startButton, 15, 0)
         layout.addWidget(self.stopLabel, 16, 1)
         layout.addWidget(self.stopButton, 16, 0)
-        layout.addWidget(self.flushButton, 17, 0)
+        layout.addWidget(self.flushButton, 17,0 )
         layout.addWidget(self.flushLabel, 17, 1)
         layout.addWidget(self.getInfoButton, 18, 0)
         layout.addWidget(self.getInfoLabel, 18, 1)
@@ -247,7 +254,7 @@ class Dialog(QtGui.QDialog):
         
         self.setLayout(layout)
 
-        self.setWindowTitle("Create Token")
+        self.setWindowTitle("EZEOS")
     
     def stopChain(self):
         flushAllFields(self)
@@ -401,6 +408,11 @@ class Dialog(QtGui.QDialog):
         
     def getInfo(self):
         out = subprocess.check_output(['cleos', 'get', 'info'])
+        self.getInfoLabel.setText(out)
+        
+    def getAccountDetails(self):
+        
+        out = subprocess.check_output(['cleos', 'get', 'account', Account.name ])
         self.getInfoLabel.setText(out)
     
 def flushAllFields(self): 
