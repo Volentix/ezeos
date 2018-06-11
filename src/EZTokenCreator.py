@@ -255,7 +255,7 @@ class Dialog(QtGui.QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle("EZEOS")
-    
+        self.showMaximized()
     def stopChain(self):
         flushAllFields(self)
         subprocess.check_output(['killall','nodeos'])   
