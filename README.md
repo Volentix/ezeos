@@ -21,6 +21,7 @@
 The tool was created as a means to quickly and easily experiment with a local instance of the EOS
 blockchain. PLEASE do not use this for production! Private keys are freely copied and stored unencrypted
 in files. This works great for this tool, not so great for security.
+Tutorial here: https://youtu.be/u6l5eRRJqC0
 
 The main functions you will find are:
 1. Start/stop/flush EOS blockchains
