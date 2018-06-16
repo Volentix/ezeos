@@ -325,7 +325,10 @@ class Dialog(QtGui.QDialog):
         out = subprocess.check_output(['cleos', 'push', 'action', Account.name, 'create', finalToken, '-p', Account.name + '@active']) 
         self.getInfoLabel.setText(out)
     
-    def setRecipientName(self):
+    def setRecipientName(self):#            subprocess.check_output(['cleos','wallet', 'unlock', '-n', Wallet.name])
+#            subprocess.call(['password:', Wallet.key])
+#            #subprocess.check_output([Wallet.key])
+#            EOS_SOURCE
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Recipient name:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
