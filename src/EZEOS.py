@@ -77,6 +77,9 @@ sip.setapi('QString', 2)
 import sys
 from PyQt4 import QtCore, QtGui
 
+class Block():
+    number = "1"
+
 class Wallet():
     name = ""
     key = ""
@@ -128,7 +131,8 @@ class Dialog(QtGui.QDialog):
         self.getAccountDetailsButton = QtGui.QPushButton("Get Account Details")
         self.toggleWalletLock = QtGui.QCheckBox("Lock wallet")
         self.listWalletsButton = QtGui.QPushButton("List Wallets")
-       
+        self.getBlockInfoButton = QtGui.QPushButton("Block Info")
+        self.setBlockNumberButton = QtGui.QPushButton("Set Block number")
 
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listWalletsButton.clicked.connect(self.listWallets)
@@ -145,7 +149,7 @@ class Dialog(QtGui.QDialog):
         self.importPrivateKeysButton.clicked.connect(self.importPrivateKeys)
         self.setAccountNameButton.clicked.connect(self.createAccountName)
         self.createAccountButton.clicked.connect(self.createAccount)
-        self.openContractButton.clicked.connect(self.loadTokenContract)
+        self.openContractButton.clicked.connect(self.LoadContract)
         self.openFileNameButton.clicked.connect(self.setContractSteps)
         self.issueButton.clicked.connect(self.issueCurrency)
         self.flushButton.clicked.connect(self.flushWallets)
@@ -153,6 +157,8 @@ class Dialog(QtGui.QDialog):
         self.recipientNameButton.clicked.connect(self.setRecipientName)
         self.issueToAccountButton.clicked.connect(self.issueToAccount)
         self.chooseCurrencyButton.clicked.connect(self.chooseCurrency)
+        self.getBlockInfoButton.clicked.connect(self.getBlockInfo)
+        self.setBlockNumberButton.clicked.connect(self.setBlockNumber)
          
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
@@ -161,7 +167,8 @@ class Dialog(QtGui.QDialog):
             self.native.hide()
 
         layout = QtGui.QGridLayout()
-        
+        layout.addWidget(self.getBlockInfoButton, 7, 4)
+        layout.addWidget(self.setBlockNumberButton, 7, 3)  
         layout.addWidget(self.issueToAccountButton, 7, 2)
         layout.addWidget(self.amountButton, 7, 1)
         layout.addWidget(self.recipientNameButton, 7, 0)        
@@ -294,10 +301,10 @@ class Dialog(QtGui.QDialog):
         out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', Account.name, Wallet.PublicKey1, Wallet.PublicKey2])
         self.getInfoLabel.setText(out)
     
-    def loadTokenContract(self):
+    def LoadContract(self):
         options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
         directory = QtGui.QFileDialog.getExistingDirectory(self,
-                "QFileDialog.getExistingDirectory()",
+                "Load Contract",
                 self.getInfoLabel.text(), options)
         if directory:
             Order.contract = directory
@@ -380,6 +387,18 @@ class Dialog(QtGui.QDialog):
     
     def listWallets(self):    
         out = subprocess.check_output(['cleos', 'wallet', 'list'])
+        self.getInfoLabel.setText(out)
+    
+    def setBlockNumber(self):    
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Block number:", QtGui.QLineEdit.Normal,
+                Block.number)
+        if ok and text != '':
+            Account.name = text
+            self.getInfoLabel.setText(text)
+        
+    def getBlockInfo(self):    
+        out = subprocess.check_output(['cleos', 'get', 'block', Block.number])
         self.getInfoLabel.setText(out)
 
 
