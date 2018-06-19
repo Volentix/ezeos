@@ -146,9 +146,11 @@ class Dialog(QtGui.QDialog):
         self.contractNameLabel.setFrameStyle(frameStyle)    
         self.openFileNameButton = QtGui.QPushButton("Set Contract Steps")
         self.issueButton = QtGui.QPushButton("Issue" + Order.currency)
+       
         self.recipientNameButton = QtGui.QPushButton("Set recipient name")
-        self.amountButton = QtGui.QPushButton("amount")
-        self.issueToAccountButton = QtGui.QPushButton("Send to receiving account")
+        self.amountButton = QtGui.QPushButton("Amount")
+        self.issueToAccountButton = QtGui.QPushButton("Issue to account")
+        self.transferToAccountButton = QtGui.QPushButton("Transfer to account")
         self.chooseCurrencyButton = QtGui.QPushButton("Set Token Name")
         self.getInfoButton = QtGui.QPushButton("GetInfo")        
         self.getBalanceButton = QtGui.QPushButton("Get Balance")    
@@ -157,6 +159,7 @@ class Dialog(QtGui.QDialog):
         self.listWalletsButton = QtGui.QPushButton("List Wallets")
         self.getBlockInfoButton = QtGui.QPushButton("Block Info")
         self.setBlockNumberButton = QtGui.QPushButton("Set Block number")
+        self.getActionsButton = QtGui.QPushButton("Get Actions")
 
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listWalletsButton.clicked.connect(self.listWallets)
@@ -180,9 +183,11 @@ class Dialog(QtGui.QDialog):
         self.amountButton.clicked.connect(self.setAmount)
         self.recipientNameButton.clicked.connect(self.setRecipientName)
         self.issueToAccountButton.clicked.connect(self.issueToAccount)
+        self.transferToAccountButton.clicked.connect(self.transferToAccount)
         self.chooseCurrencyButton.clicked.connect(self.chooseCurrency)
         self.getBlockInfoButton.clicked.connect(self.getBlockInfo)
         self.setBlockNumberButton.clicked.connect(self.setBlockNumber)
+        self.getActionsButton.clicked.connect(self.getActions)
          
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
@@ -238,6 +243,7 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.setAccountNameButton)
         self.tab3.layout.addWidget(self.createAccountButton)
         self.tab3.layout.addWidget(self.getAccountDetailsButton)
+        self.tab3.layout.addWidget(self.getActionsButton)
         self.tab3.layout.addWidget(self.getBalanceButton)
         self.tab3.setLayout(self.tab3.layout) 
         
@@ -252,24 +258,34 @@ class Dialog(QtGui.QDialog):
         self.tab5.layout.addWidget(self.recipientNameButton)
         self.tab5.layout.addWidget(self.amountButton)
         self.tab5.layout.addWidget(self.issueToAccountButton)
+        self.tab5.layout.addWidget(self.transferToAccountButton)
+        
         self.tab5.setLayout(self.tab5.layout)
-       
+        
     
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
         self.showMaximized()
-        
+
     
         
-    
+    def openEditor(self):
+        openEditor = QtGui.QAction('&Editor', self)
+        openEditor.setShortcut('Ctrl+E')
+        openEditor.setStatusTip('Open Editor')
+        openEditor.triggered.connect(self.editor)
+        editorMenu = self.mainMenu.addMenu('&Editor')
+        editorMenu.addAction(openEditor)
     
     def update_label(self):
-    
         self.walletNameLabel.setText('Wallet name: ' + Wallet.name)
         self.accountNameLabel.setText('Account name: ' + Account.name)
         self.contractNameLabel.setText('Contract name: ' + Order.contract)
         
+    def getActions(self):
+        out = subprocess.check_output(['cleos','get', 'actions', Account.name])   
+        self.getInfoLabel.setText(out)
         
     
     def lockWallet(self):
@@ -299,7 +315,7 @@ class Dialog(QtGui.QDialog):
         home = os.environ['HOME'] 
         os.environ['EOS_SOURCE'] = home + "/eos"
         os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
-        os.environ['EZEOS_SOURCE'] = home + "/EZEOS/src"
+        os.environ['EZEOS_SOURCE'] = home + "/ezeos/src"
         
         self.timer.timeout.connect(self.update_label)
         self.timer.start(100)  # every 10,000 milliseconds
@@ -307,9 +323,9 @@ class Dialog(QtGui.QDialog):
     def resetChain(self):
         out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])
         self.getInfoLabel.setText('chain reset' + out)
-        Account.reset()
-        Wallet.reset()
-        Order.reset()
+#        Account.reset(self)
+#        Wallet.reset(self)
+#        Order.reset(self)
         
     def setWalletName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -387,9 +403,8 @@ class Dialog(QtGui.QDialog):
         directory = QtGui.QFileDialog.getExistingDirectory(self,
                 "Load Contract",
                 self.getInfoLabel.text(), options)
-        if directory:
-            Order.contract = directory
-            Order.contractAccountName = os.path.basename(directory)
+        Order.contract = directory
+        Order.contractAccountName = os.path.basename(directory)
             
         self.getInfoLabel.setText(directory)
         
@@ -402,7 +417,7 @@ class Dialog(QtGui.QDialog):
                 "Token name:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
-            Order.currency = ' ' + text
+            Order.currency = text
             self.getInfoLabel.setText(text)
 
     
@@ -430,14 +445,12 @@ class Dialog(QtGui.QDialog):
                 "Amount:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
-            Order.amount = text + Order.currency
+            Order.amount = text + ' ' + Order.currency
             self.amountLabel.setText(Order.amount)
             self.getInfoLabel.setText(Order.amount)
     
     def issueToAccount(self):
-        
         out = subprocess.check_output(['cleos', 'get', 'account', Account.name ])
-        self.getInfoLabel.setText(out)
         token1 = '{"to": "'
         token2 = Order.name
         token3 = '", "quantity": "'
@@ -445,6 +458,17 @@ class Dialog(QtGui.QDialog):
         token5 = '", "memo": "testing"}'
         finalToken = token1 + token2 + token3 + str(token4) + token5
         out = subprocess.check_output(['cleos', 'push', 'action', Account.name, 'issue', finalToken, '-p', Account.name]) # + '@active']) 
+        self.getInfoLabel.setText(out)
+        
+    def transferToAccount(self):
+        out = subprocess.check_output(['cleos', 'get', 'account', Account.name ])
+        token1 = '{"to": "'
+        token2 = Order.name
+        token3 = '", "quantity": "'
+        token4 = Order.amount
+        token5 = '", "memo": "testing"}'
+        finalToken = token1 + token2 + token3 + str(token4) + token5
+        out = subprocess.check_output(['cleos', 'push', 'action', Account.name, 'transfer', finalToken, '-p', Account.name]) # + '@active']) 
         self.getInfoLabel.setText(out)
     
     def flushWallets(self):
@@ -461,8 +485,7 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def getBalance(self):
-        
-        out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', Order.contractAccountName, Account.name,  Order.currency ])
+        out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', Order.contractAccountName, Account.name, Order.currency ])
         self.getInfoLabel.setText(out)
     
     def listWallets(self):    
@@ -484,6 +507,6 @@ class Dialog(QtGui.QDialog):
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-
+   
     dialog = Dialog()
     sys.exit(dialog.exec_())
