@@ -78,9 +78,13 @@ sip.setapi('QString', 2)
 import sys
 from PyQt4 import QtCore, QtGui
 
-class Block():
+class BlockChain():
+    class Block():
+        def __init__(self):
+            self.number = "1"
     def __init__(self):
-        self.number = "1"
+        self.block = self.Block()
+        self.producerList = []
 
 class Wallet():
     
@@ -124,9 +128,7 @@ class Order():
         self.currency = ""
         self.contractAccountName = ""
  
-class MainNet():
-    def __init__(self):
-        self.producerList = []
+
     
     
 class Dialog(QtGui.QDialog):
@@ -136,8 +138,7 @@ class Dialog(QtGui.QDialog):
         self.wallet = Wallet()
         self.order = Order()
         self.account = Account()
-        self.block = Block()
-        self.mainNet = MainNet()
+        self.blockchain = BlockChain()
         self.timer = QtCore.QTimer()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         self.openContractButton = QtGui.QPushButton("Open Contract")    
@@ -241,7 +242,7 @@ class Dialog(QtGui.QDialog):
         self.tabs.addTab(self.tab3,"Accounts")
         self.tabs.addTab(self.tab4,"Contract")
         self.tabs.addTab(self.tab5,"eosio.token")
-        self.tabs.addTab(self.tab6,"Main Net")
+        self.tabs.addTab(self.tab6,"*****")
  
        
         self.tab1.layout = QtGui.QVBoxLayout(self)
@@ -250,6 +251,10 @@ class Dialog(QtGui.QDialog):
         self.tab1.layout.addWidget(self.startButton) 
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
+        self.comboBox = QtGui.QComboBox()
+        self.comboBox.setObjectName(("Block Producers"))
+        self.tab1.layout.addWidget(self.comboBox)
+        self.tab1.layout.addWidget(self.listProducersButton)            
         self.tab1.setLayout(self.tab1.layout)
  
        
@@ -288,29 +293,14 @@ class Dialog(QtGui.QDialog):
         
         self.tab6.layout = QtGui.QVBoxLayout(self) 
         
-        self.comboBox = QtGui.QComboBox()
-        
-        self.comboBox.setObjectName(("Block Producers"))
-        
-            
-        self.tab6.layout.addWidget(self.comboBox)
-        self.tab6.layout.addWidget(self.listProducersButton)            
+       
         self.tab6.setLayout(self.tab6.layout)
 
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
         self.showMaximized()
-
-    
-        
-    def openEditor(self):
-        openEditor = QtGui.QAction('&Editor', self)
-        openEditor.setShortcut('Ctrl+E')
-        openEditor.setStatusTip('Open Editor')
-        openEditor.triggered.connect(self.editor)
-        editorMenu = self.mainMenu.addMenu('&Editor')
-        editorMenu.addAction(openEditor)
+ 
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
@@ -357,9 +347,9 @@ class Dialog(QtGui.QDialog):
     def resetChain(self):
         out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])
         self.getInfoLabel.setText('chain reset' + out)
-#        self.account.reset(self)
-#        self.wallet.reset(self)
-#        self.order.reset(self)
+        self.account.reset(self)
+        self.wallet.reset(self)
+        self.order.reset(self)
         
     def setWalletName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -529,33 +519,27 @@ class Dialog(QtGui.QDialog):
     def setBlockNumber(self):    
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Block number:", QtGui.QLineEdit.Normal,
-                self.block.number)
+                self.blockchain.block.number)
         if ok and text != '':
             self.account.name = text
             self.getInfoLabel.setText(text)
         
     def getBlockInfo(self):    
-        out = subprocess.check_output(['cleos', 'get', 'block', self.block.number])
+        out = subprocess.check_output(['cleos', 'get', 'block', self.blockchain.block.number])
         self.getInfoLabel.setText(out)
         
     def listProducers(self):
-        #cleos -u https://eos.greymass.com/ get info
-        url = "https://eos.greymass.com/v1/chain/get_producers"
-        response = requests.request("POST", url)
-        producer_list = response.text.split(",")
-        for i in producer_list:
+        
+        out = subprocess.check_output(['cleos', '--url', 'http://mainnet.eoscalgary.io:80', 'system', 'listproducers'])
+        self.blockchain.producerList = iter(out.splitlines())
+        num = 1
+        for i in self.blockchain.producerList:
             self.comboBox.addItem(i)
-            
-        #provider_list = self.intersperse(provider_list,'\n')
-        self.getInfoLabel.setText(str(len(producer_list)) + 'Block Producers')
-        self.getInfoLabel.setWordWrap(True);
-      
-    def intersperse(self, lst, item):
-        result = [item] * (len(lst) * 2 - 1)
-        result[0::2] = lst
-        return result  
+            num += 1;
+        self.getInfoLabel.setText(str(num) + ' Block Producers' )    
+        
+         #cleos -u https://eos.greymass.com/ get info
     
-
 if __name__ == '__main__':
     
     app = QtGui.QApplication(sys.argv)
