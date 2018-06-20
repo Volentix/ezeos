@@ -69,7 +69,8 @@
 import subprocess
 import os
 import pexpect
-import requests
+import pprint
+
 
 
 # This is only needed for Python v2 but is harmless for Python v3.
@@ -84,7 +85,40 @@ class BlockChain():
             self.number = "1"
     def __init__(self):
         self.block = self.Block()
-        self.producerList = []
+        
+        self.producer = []
+        self.producerList = [
+                                'https://api.eosnewyork.io:443', 
+                                'https://api.eosdetroit.io:443',
+                                'https://eos.greymass.com:443',
+                                'https://api.eosmetal.io:18890',
+                                'http://api.hkeos.com:80',
+                                'https://eosapi.blockmatrix.network:443',
+                                'https://fn.eossweden.se:443',
+                                'http://api.blockgenicbp.com:8888',
+                                'http://mainnet.eoscalgary.io:80',
+                                'http://mainnet.eoscalgary.io:80',
+                                'https://node1.eosphere.io',
+                                'https://eos.saltblock.io',
+                                'http://eos-api.worbli.io:80',
+                                'https://eos-api.worbli.io:443',
+                                'http://mainnet.eoscalgary.io:80',
+                                'https://user-api.eoseoul.io:443',
+                                'http://user-api.eoseoul.io:80', 
+                                'https://node2.liquideos.com:8883',
+                                'http://node2.liquideos.com:8888',
+                                'https://api.eosuk.io:443',
+                                'http://api1.eosdublin.io:80',
+                                'http://api.eosvibes.io:80',
+                                'http://api.cypherglass.com:8888',
+                                'https://api.cypherglass.com:443',
+                                'http://bp.cryptolions.io:8888',
+                                'http://dc1.eosemerge.io:8888',
+                                'https://dc1.eosemerge.io:5443',
+                                'https://api.eosio.cr:443',
+                                'https://api.eosn.io',
+                                'https://eu1.eosdac.io:443',
+                             ]
 
 class Wallet():
     
@@ -162,8 +196,7 @@ class Dialog(QtGui.QDialog):
         self.contractNameLabel = QtGui.QLabel()
         self.contractNameLabel.setFrameStyle(frameStyle)    
         self.openFileNameButton = QtGui.QPushButton("Set Contract Steps")
-        self.issueButton = QtGui.QPushButton("Issue" + self.order.currency)
-       
+        self.issueButton = QtGui.QPushButton("Issue Currency")
         self.recipientNameButton = QtGui.QPushButton("Set recipient name")
         self.amountButton = QtGui.QPushButton("Amount")
         self.issueToAccountButton = QtGui.QPushButton("Issue to account")
@@ -178,6 +211,7 @@ class Dialog(QtGui.QDialog):
         self.setBlockNumberButton = QtGui.QPushButton("Set Block number")
         self.getActionsButton = QtGui.QPushButton("Get Actions")
         self.listProducersButton = QtGui.QPushButton("Get Block Producers")
+        self.getProducerInfoButton = QtGui.QPushButton("Get Block Producer Info")
         self.button = QtGui.QToolButton(self)
         
         
@@ -211,6 +245,7 @@ class Dialog(QtGui.QDialog):
         self.setBlockNumberButton.clicked.connect(self.setBlockNumber)
         self.getActionsButton.clicked.connect(self.getActions)
         self.listProducersButton.clicked.connect(self.listProducers)
+        self.getProducerInfoButton.clicked.connect(self.getProducerInfo)
          
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
@@ -251,10 +286,13 @@ class Dialog(QtGui.QDialog):
         self.tab1.layout.addWidget(self.startButton) 
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
+        self.tab1.layout.addWidget(self.listProducersButton)
         self.comboBox = QtGui.QComboBox()
         self.comboBox.setObjectName(("Block Producers"))
+        for i in self.blockchain.producerList:
+            self.comboBox.addItem(i)
         self.tab1.layout.addWidget(self.comboBox)
-        self.tab1.layout.addWidget(self.listProducersButton)            
+        self.tab1.layout.addWidget(self.getProducerInfoButton)            
         self.tab1.setLayout(self.tab1.layout)
  
        
@@ -292,8 +330,7 @@ class Dialog(QtGui.QDialog):
         self.tab5.setLayout(self.tab5.layout)
         
         self.tab6.layout = QtGui.QVBoxLayout(self) 
-        
-       
+    
         self.tab6.setLayout(self.tab6.layout)
 
         layout.addWidget(self.tabs)
@@ -529,16 +566,14 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def listProducers(self):
-        
         out = subprocess.check_output(['cleos', '--url', 'http://mainnet.eoscalgary.io:80', 'system', 'listproducers'])
-        self.blockchain.producerList = iter(out.splitlines())
-        num = 1
-        for i in self.blockchain.producerList:
-            self.comboBox.addItem(i)
-            num += 1;
-        self.getInfoLabel.setText(str(num) + ' Block Producers' )    
+        self.getInfoLabel.setText(out)    
+     
+    def getProducerInfo(self):
+        self.blockchain.producer = self.comboBox.currentText()
+        out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
+        self.getInfoLabel.setText(out)
         
-         #cleos -u https://eos.greymass.com/ get info
     
 if __name__ == '__main__':
     
