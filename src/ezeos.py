@@ -476,7 +476,10 @@ class Dialog(QtGui.QDialog):
         createAccount = os.environ['HOME'] + '/eosio-wallet'
         if not os.path.exists(createAccount):
             os.makedirs(createAccount)
-        out = subprocess.check_output(['cleos','wallet', 'create', '-n', self.wallet.name])
+        if self.blockchain.net == 'test' or self.blockchain.net == 'main':
+            out = subprocess.check_output(['cleos','-u', '"' + str(self.blockchain.producer) + '"' ,'wallet', 'create', '-n', self.wallet.name])
+        else:
+            out = subprocess.check_output(['cleos','wallet', 'create', '-n', self.wallet.name])
         f = open( self.wallet.name, 'w' )
         f.write(out)
         f.close()
@@ -631,8 +634,8 @@ class Dialog(QtGui.QDialog):
     def listWallets(self):
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'wallet', 'list'])
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'wallet', 'list'])
+        else: 
+            out = subprocess.check_output(['cleos', '-u', '"' + str(self.blockchain.producer) + '"', 'wallet', 'list'])
         self.getInfoLabel.setText(out)
             
     
