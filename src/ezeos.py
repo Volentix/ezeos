@@ -668,6 +668,10 @@ class Dialog(QtGui.QDialog):
             self.toggleTestNet.setChecked(False)
             self.toggleLocalNet.setChecked(False)
             self.getInfoLabel.setText('Switched to main net')
+        else:
+            self.getInfoLabel.setText("Off the main net")
+            self.blockchain.running = False
+            
         
     def localNet(self):
         if self.toggleLocalNet.checkState() != 0:
@@ -677,6 +681,10 @@ class Dialog(QtGui.QDialog):
             self.blockchain.net = 'local'
             self.blockchain.running = True
             self.getInfoLabel.setText('Switched to local net')
+        else:
+            self.blockchain.running = False
+            self.getInfoLabel.setText("Off local net")
+            
             
         
     def testNet(self):
