@@ -84,81 +84,82 @@ class BlockChain():
         def __init__(self):
             self.number = "1"
     def __init__(self):
+        self.net = ['main', 'test', 'local']
         self.block = self.Block()
-        
+        self.running = False
         self.producer = []
-        self.producerList = [
-                                'https://api.eosnewyork.io:443', 
-                                'https://api.eosdetroit.io:443',
-                                'https://eos.greymass.com:443',
-                                'https://api.eosmetal.io:18890',
-                                'http://api.hkeos.com:80',
-                                'https://eosapi.blockmatrix.network:443',
-                                'https://fn.eossweden.se:443',
-                                'http://api.blockgenicbp.com:8888',
-                                'http://mainnet.eoscalgary.io:80',
-                                'http://mainnet.eoscalgary.io:80',
-                                'https://node1.eosphere.io',
-                                'https://eos.saltblock.io',
-                                'http://eos-api.worbli.io:80',
-                                'https://eos-api.worbli.io:443',
-                                'http://mainnet.eoscalgary.io:80',
-                                'https://user-api.eoseoul.io:443',
-                                'http://user-api.eoseoul.io:80', 
-                                'https://node2.liquideos.com:8883',
-                                'http://node2.liquideos.com:8888',
-                                'https://api.eosuk.io:443',
-                                'http://api1.eosdublin.io:80',
-                                'http://api.eosvibes.io:80',
-                                'http://api.cypherglass.com:8888',
-                                'https://api.cypherglass.com:443',
-                                'http://bp.cryptolions.io:8888',
-                                'http://dc1.eosemerge.io:8888',
-                                'https://dc1.eosemerge.io:5443',
-                                'https://api.eosio.cr:443',
-                                'https://api.eosn.io',
-                                'https://eu1.eosdac.io:443',
-                             ]
+        self.producerList =     [
+                                    'https://api.eosnewyork.io:443', 
+                                    'https://api.eosdetroit.io:443',
+                                    'https://eos.greymass.com:443',
+                                    'https://api.eosmetal.io:18890',
+                                    'http://api.hkeos.com:80',
+                                    'https://eosapi.blockmatrix.network:443',
+                                    'https://fn.eossweden.se:443',
+                                    'http://api.blockgenicbp.com:8888',
+                                    'http://mainnet.eoscalgary.io:80',
+                                    'http://mainnet.eoscalgary.io:80',
+                                    'https://node1.eosphere.io',
+                                    'https://eos.saltblock.io',
+                                    'http://eos-api.worbli.io:80',
+                                    'https://eos-api.worbli.io:443',
+                                    'http://mainnet.eoscalgary.io:80',
+                                    'https://user-api.eoseoul.io:443',
+                                    'http://user-api.eoseoul.io:80', 
+                                    'https://node2.liquideos.com:8883',
+                                    'http://node2.liquideos.com:8888',
+                                    'https://api.eosuk.io:443',
+                                    'http://api1.eosdublin.io:80',
+                                    'http://api.eosvibes.io:80',
+                                    'http://api.cypherglass.com:8888',
+                                    'https://api.cypherglass.com:443',
+                                    'http://bp.cryptolions.io:8888',
+                                    'http://dc1.eosemerge.io:8888',
+                                    'https://dc1.eosemerge.io:5443',
+                                    'https://api.eosio.cr:443',
+                                    'https://api.eosn.io',
+                                    'https://eu1.eosdac.io:443',
+                                ]
         self.testProducerList = [
-                 'eosgreen.uk.to:9875',
-                 'ctestnet.edenx.io:62071',
-                 '54.194.49.21:9875',
-                 'superhero.cryptolions.io:9885',
-                 'venom.eoscalgary.com:9877',
-                 'joker.superhero.eos.roelandp.nl:9873',
-                 'ctestnet.eosdetroit.com:1339',
-                 'bp7-d3.eos42.io:9876',
-                 'superheroes.eosio.africa:9876',
-                 '156.38.160.91:9876',
-                 '166.70.202.194:9877',
-                 '18.188.52.250:9889',
-                 'ctest.eosnewyork.io:9870',
-                 '35.195.161.56:9876',
-                 '159.89.197.162:9877',
-                 'dawn3-seed.tokenika.io:9876',
-                 'bp.blockgenic.io:9876',
-                 '47.52.18.70:9876',
-                 '120.27.130.60:9876',
-                 'ctest.koreos.io:9876',
-                 'ctestnet.objectcomputing.com:9876',
-                 'test.eosys.io:9875',
-                 'bp-test.eosasia.one:9876',
-                 '138.68.15.85:9876',
-                 '47.88.222.80:9876',
-                 '54.233.222.22:9875',
-                 '39.108.231.157:9877',
-                 'ctestnet.eoshenzhen.io:9876',
-                 'eosbp.enjoyshare.net:9876',
-                 'bpt1.eosbixin.com:9876',
-                 '46.4.253.242:7610',
-                 'superhero-bp1.eosphere.io:9876',
-                 '138.68.238.129:9875',
-                 '178.49.174.48:9876',
-                 'superhero.worbli.io:9876',
-                 'wonderwoman.eosreal.io:9876',
-                 'eosbrazil.com:9878',
-                 '35.202.41.160:9876',
-          ]
+                                     'eosgreen.uk.to:9875',
+                                     'ctestnet.edenx.io:62071',
+                                     '54.194.49.21:9875',
+                                     'superhero.cryptolions.io:9885',
+                                     'venom.eoscalgary.com:9877',
+                                     'joker.superhero.eos.roelandp.nl:9873',
+                                     'ctestnet.eosdetroit.com:1339',
+                                     'bp7-d3.eos42.io:9876',
+                                     'superheroes.eosio.africa:9876',
+                                     '156.38.160.91:9876',
+                                     '166.70.202.194:9877',
+                                     '18.188.52.250:9889',
+                                     'ctest.eosnewyork.io:9870',
+                                     '35.195.161.56:9876',
+                                     '159.89.197.162:9877',
+                                     'dawn3-seed.tokenika.io:9876',
+                                     'bp.blockgenic.io:9876',
+                                     '47.52.18.70:9876',
+                                     '120.27.130.60:9876',
+                                     'ctest.koreos.io:9876',
+                                     'ctestnet.objectcomputing.com:9876',
+                                     'test.eosys.io:9875',
+                                     'bp-test.eosasia.one:9876',
+                                     '138.68.15.85:9876',
+                                     '47.88.222.80:9876',
+                                     '54.233.222.22:9875',
+                                     '39.108.231.157:9877',
+                                     'ctestnet.eoshenzhen.io:9876',
+                                     'eosbp.enjoyshare.net:9876',
+                                     'bpt1.eosbixin.com:9876',
+                                     '46.4.253.242:7610',
+                                     'superhero-bp1.eosphere.io:9876',
+                                     '138.68.238.129:9875',
+                                     '178.49.174.48:9876',
+                                     'superhero.worbli.io:9876',
+                                     'wonderwoman.eosreal.io:9876',
+                                     'eosbrazil.com:9878',
+                                     '35.202.41.160:9876',
+                              ]
 
 class Wallet():
     
@@ -245,27 +246,32 @@ class Dialog(QtGui.QDialog):
         self.getInfoButton = QtGui.QPushButton("Get Info")        
         self.getBalanceButton = QtGui.QPushButton("Get Balance")    
         self.getAccountDetailsButton = QtGui.QPushButton("Get Account Details")
-        self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
+       
         self.listWalletsButton = QtGui.QPushButton("List Wallets")
         self.getBlockInfoButton = QtGui.QPushButton("Block Info")
-        self.setBlockNumberButton = QtGui.QPushButton("Set Block nNumber")
+        self.setBlockNumberButton = QtGui.QPushButton("Set Block Number")
         self.getActionsButton = QtGui.QPushButton("Get Actions")
         self.listProducersButton = QtGui.QPushButton("Get Block Producers")
         self.getProducerInfoButton = QtGui.QPushButton("Get Block Producer Info")
-        self.button = QtGui.QToolButton(self)
         self.producerBox = QtGui.QComboBox()
         self.testProducerBox = QtGui.QComboBox()
-        self.producerBox.setObjectName(("Block Producers"))
-        self.testProducerBox.setObjectName(("Test Block Producers"))
+        self.producerBox.setObjectName(("Access to Main Net"))
+        self.testProducerBox.setObjectName(("Access To Test Net"))
         for i in self.blockchain.producerList:
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
+        self.toggleMainNet = QtGui.QCheckBox("Main Net")
+        self.toggleTestNet = QtGui.QCheckBox("Test Net")
+        self.toggleLocalNet = QtGui.QCheckBox("Local Net")
+        self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
         
-        
-        
-        self.button.clicked.connect(self.listProducers)
+        self.toggleMainNet.toggled.connect(self.mainNet)
+        self.toggleTestNet.toggled.connect(self.testNet)
+        self.toggleLocalNet.toggled.connect(self.localNet)
         self.toggleWalletLock.toggled.connect(self.lockWallet)
+        self.listProducersButton.clicked.connect(self.listProducers)
+        
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
         self.getAccountDetailsButton.clicked.connect(self.getAccountDetails)
@@ -302,9 +308,11 @@ class Dialog(QtGui.QDialog):
             self.native.hide()
 
         layout = QtGui.QGridLayout()
-
-        layout.addWidget(self.contractNameLabel, 5, 0)
-        layout.addWidget(self.accountNameLabel, 4, 0)    
+        layout.addWidget(self.toggleMainNet, 6, 0)
+        layout.addWidget(self.toggleTestNet, 5, 0)
+        layout.addWidget(self.toggleLocalNet, 4, 0)
+        layout.addWidget(self.contractNameLabel, 3, 0)
+        layout.addWidget(self.accountNameLabel, 2, 0)    
         layout.addWidget(self.walletNameLabel, 1, 0)
         layout.addWidget(self.getInfoLabel,  0, 0, 1, 7)
         
@@ -335,10 +343,10 @@ class Dialog(QtGui.QDialog):
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
-        self.label = QtGui.QLabel("Main Net Block producers")
+        self.label = QtGui.QLabel("Main Net")
         self.tab1.layout.addWidget(self.label)
         self.tab1.layout.addWidget(self.producerBox)
-        self.label2 = QtGui.QLabel("Test Net Block producers")
+        self.label2 = QtGui.QLabel("Test Net")
         self.tab1.layout.addWidget(self.label2)
         self.tab1.layout.addWidget(self.testProducerBox)
         self.tab1.layout.addWidget(self.getProducerInfoButton)            
@@ -401,7 +409,7 @@ class Dialog(QtGui.QDialog):
     def lockWallet(self):
         if self.wallet.locked == False:
             print('Lock')
-            subprocess.check_output(['cleos','wallet', 'lock', '-n', self.wallet.name])
+            subprocess.check_output(['cleos','wallet', 'lock','-n', self.wallet.name])
             self.wallet.locked = True
             self.listWallets()
         else:
@@ -426,16 +434,16 @@ class Dialog(QtGui.QDialog):
         os.environ['EOS_SOURCE'] = home + "/eos"
         os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
         os.environ['EZEOS_SOURCE'] = home + "/ezeos/src"
-        
+        self.blockchain.net = 'local'
         self.timer.timeout.connect(self.update_label)
         self.timer.start(100)  # every 10,000 milliseconds
         
     def resetChain(self):
         out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])
         self.getInfoLabel.setText('chain reset' + out)
-        self.account.reset(self)
-        self.wallet.reset(self)
-        self.order.reset(self)
+        self.account.reset()
+        self.wallet.reset()
+        self.order.reset()
         
     def setWalletName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -597,9 +605,13 @@ class Dialog(QtGui.QDialog):
         out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', self.order.contractAccountName, self.account.name, self.order.currency ])
         self.getInfoLabel.setText(out)
     
-    def listWallets(self):    
-        out = subprocess.check_output(['cleos', 'wallet', 'list'])
+    def listWallets(self):
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'wallet', 'list'])
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'wallet', 'list'])
         self.getInfoLabel.setText(out)
+            
     
     def setBlockNumber(self):    
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -621,6 +633,41 @@ class Dialog(QtGui.QDialog):
         self.blockchain.producer = self.producerBox.currentText()
         out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
         self.getInfoLabel.setText(out)
+    def mainNet(self):
+        if self.toggleMainNet.checkState() != 0:
+            try:
+                self.stopChain()
+            except:
+                print("")
+                
+            self.resetChain()
+            self.blockchain.net = 'main'
+            self.toggleTestNet.setChecked(False)
+            self.toggleLocalNet.setChecked(False)
+        
+    def localNet(self):
+        if self.toggleLocalNet.checkState() != 0:
+            try:
+                self.stopChain()
+            except:
+                print("")
+            self.resetChain()
+            self.startChain()
+            self.blockchain.net = 'local'
+            self.toggleMainNet.setChecked(False)
+            self.toggleTestNet.setChecked(False)
+        
+    def testNet(self):
+        if self.toggleTestNet.checkState() != 0:
+            try:
+                self.stopChain()
+            except:
+                print("")
+            self.resetChain()
+            self.blockchain.net = 'test'
+            self.toggleMainNet.setChecked(False)
+            
+            self.toggleLocalNet.setChecked(False)
         
         
     
