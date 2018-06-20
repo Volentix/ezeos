@@ -48,7 +48,7 @@ cd src
 
 Run:
 ```
-python EZTokenCreator.py
+python ezeos.py
 ```
 
 Happy hacking!
@@ -59,7 +59,7 @@ Happy hacking!
 
 ## Contribute
 
-If you are intereted in contributing, please read [the code of conduct file](code-of-conduct.md).
+If you are interested in contributing, please read [the code of conduct file](code-of-conduct.md).
 
 PRs are accepted, but be aware that the tool currently meets our very limited needs and so our time to review is limited. We decided to share it with the open source community in the hopes that it would be as useful for others as it has been for us. You are encouraged to fork it and make a go of it on your own. Having said that, we would love to hear from you aboout your efforts! If we can help we will!
 
