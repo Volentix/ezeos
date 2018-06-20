@@ -393,7 +393,7 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
-        self.showMaximized()
+        #self.showMaximized()
  
     
     def update_label(self):
@@ -652,7 +652,7 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def listProducers(self):
-        out = subprocess.check_output(['cleos', '--url', 'http://mainnet.eoscalgary.io:80', 'system', 'listproducers'])
+        out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'listproducers'])
         self.getInfoLabel.setText(out)    
      
     def getProducerInfo(self):
@@ -683,6 +683,7 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText('Switched to local net')
         else:
             self.blockchain.running = False
+            self.stopChain()
             self.getInfoLabel.setText("Off local net")
             
             
