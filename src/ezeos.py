@@ -400,6 +400,11 @@ class Dialog(QtGui.QDialog):
         self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
         self.accountNameLabel.setText('Account name: ' + self.account.name)
         self.contractNameLabel.setText('Contract name: ' + self.order.contract)
+        self.toggleLocalNet.setChecked(self.blockchain.running)
+        if self.blockchain.running:
+            self.toggleMainNet.setChecked(False)
+            self.toggleTestNet.setChecked(False)
+            
         
     def getActions(self):
         out = subprocess.check_output(['cleos','get', 'actions', self.account.name])   
@@ -423,13 +428,21 @@ class Dialog(QtGui.QDialog):
             self.wallet.locked = False
         
     def stopChain(self):
-        subprocess.check_output(['killall','nodeos'])   
-        self.getInfoLabel.setText('chain stopped')
-        
-        
+         
+        try:
+            subprocess.check_output(['killall','nodeos'])
+            self.getInfoLabel.setText('Chain stopped')
+            self.blockchain.running = False
+        except:
+            self.getInfoLabel.setText('No chain running')
+            self.blockchain.running = False
+           
+       
+    
     def startChain(self):
+        subprocess.Popen(['xterm', '-e', 'nodeos --resync'])
         self.getInfoLabel.setText('chain started')
-        subprocess.Popen(['xterm', '-e', 'nodeos'])
+        self.blockchain.running = True
         home = os.environ['HOME'] 
         os.environ['EOS_SOURCE'] = home + "/eos"
         os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
@@ -438,9 +451,15 @@ class Dialog(QtGui.QDialog):
         self.timer.timeout.connect(self.update_label)
         self.timer.start(100)  # every 10,000 milliseconds
         
+        
     def resetChain(self):
-        out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])
-        self.getInfoLabel.setText('chain reset' + out)
+        out = ''
+        try:
+            out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])          
+        except:
+            print('Already reset')
+        self.blockchain.running = False   
+        self.getInfoLabel.setText('Chain reset' + out)
         self.account.reset()
         self.wallet.reset()
         self.order.reset()
@@ -512,9 +531,13 @@ class Dialog(QtGui.QDialog):
             self.account.name = text
             self.getInfoLabel.setText(text)
         
-    def createAccount(self): 
-        out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.publicKey1, self.wallet.publicKey2])
+    def createAccount(self):
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.publicKey1, self.wallet.publicKey2])
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'create', 'account', 'eosio', self.account.name, self.wallet.publicKey1, self.wallet.publicKey2])
         self.getInfoLabel.setText(out)
+    
     
     def LoadContract(self):
         options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
@@ -635,39 +658,33 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     def mainNet(self):
         if self.toggleMainNet.checkState() != 0:
-            try:
-                self.stopChain()
-            except:
-                print("")
-                
+            self.stopChain()
             self.resetChain()
             self.blockchain.net = 'main'
+            self.blockchain.running = False
             self.toggleTestNet.setChecked(False)
             self.toggleLocalNet.setChecked(False)
+            self.getInfoLabel.setText('Switched to main net')
         
     def localNet(self):
         if self.toggleLocalNet.checkState() != 0:
-            try:
-                self.stopChain()
-            except:
-                print("")
+            self.stopChain()
             self.resetChain()
             self.startChain()
             self.blockchain.net = 'local'
-            self.toggleMainNet.setChecked(False)
-            self.toggleTestNet.setChecked(False)
+            self.blockchain.running = True
+            self.getInfoLabel.setText('Switched to local net')
+            
         
     def testNet(self):
         if self.toggleTestNet.checkState() != 0:
-            try:
-                self.stopChain()
-            except:
-                print("")
+            self.stopChain()
             self.resetChain()
+            self.blockchain.running = False
             self.blockchain.net = 'test'
             self.toggleMainNet.setChecked(False)
-            
             self.toggleLocalNet.setChecked(False)
+            self.getInfoLabel.setText('Switched to test net')
         
         
     
