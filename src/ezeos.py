@@ -69,7 +69,7 @@
 import subprocess
 import os
 import pexpect
-import pprint
+
 
 
 
@@ -119,6 +119,46 @@ class BlockChain():
                                 'https://api.eosn.io',
                                 'https://eu1.eosdac.io:443',
                              ]
+        self.testProducerList = [
+                 'eosgreen.uk.to:9875',
+                 'ctestnet.edenx.io:62071',
+                 '54.194.49.21:9875',
+                 'superhero.cryptolions.io:9885',
+                 'venom.eoscalgary.com:9877',
+                 'joker.superhero.eos.roelandp.nl:9873',
+                 'ctestnet.eosdetroit.com:1339',
+                 'bp7-d3.eos42.io:9876',
+                 'superheroes.eosio.africa:9876',
+                 '156.38.160.91:9876',
+                 '166.70.202.194:9877',
+                 '18.188.52.250:9889',
+                 'ctest.eosnewyork.io:9870',
+                 '35.195.161.56:9876',
+                 '159.89.197.162:9877',
+                 'dawn3-seed.tokenika.io:9876',
+                 'bp.blockgenic.io:9876',
+                 '47.52.18.70:9876',
+                 '120.27.130.60:9876',
+                 'ctest.koreos.io:9876',
+                 'ctestnet.objectcomputing.com:9876',
+                 'test.eosys.io:9875',
+                 'bp-test.eosasia.one:9876',
+                 '138.68.15.85:9876',
+                 '47.88.222.80:9876',
+                 '54.233.222.22:9875',
+                 '39.108.231.157:9877',
+                 'ctestnet.eoshenzhen.io:9876',
+                 'eosbp.enjoyshare.net:9876',
+                 'bpt1.eosbixin.com:9876',
+                 '46.4.253.242:7610',
+                 'superhero-bp1.eosphere.io:9876',
+                 '138.68.238.129:9875',
+                 '178.49.174.48:9876',
+                 'superhero.worbli.io:9876',
+                 'wonderwoman.eosreal.io:9876',
+                 'eosbrazil.com:9878',
+                 '35.202.41.160:9876',
+          ]
 
 class Wallet():
     
@@ -176,17 +216,17 @@ class Dialog(QtGui.QDialog):
         self.timer = QtCore.QTimer()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         self.openContractButton = QtGui.QPushButton("Open Contract")    
-        self.setWalletNameButton = QtGui.QPushButton("Wallet name")
-        self.restartButton = QtGui.QPushButton("Reset chain")
-        self.startButton = QtGui.QPushButton("Start chain")
-        self.stopButton = QtGui.QPushButton("Stop chain")
-        self.flushButton = QtGui.QPushButton("Flush wallets")
-        self.createWalletButton = QtGui.QPushButton("Create wallet")
-        self.setOwnerKeyButton = QtGui.QPushButton("Set owner Key")
-        self.setActiveKeyButton = QtGui.QPushButton("Set active key")
-        self.importPrivateKeysButton = QtGui.QPushButton("Import private keys")
-        self.setAccountNameButton = QtGui.QPushButton("Account name")
-        self.createAccountButton = QtGui.QPushButton("Create account")        
+        self.setWalletNameButton = QtGui.QPushButton("Wallet Name")
+        self.restartButton = QtGui.QPushButton("Reset Local Chain")
+        self.startButton = QtGui.QPushButton("Start Local Chain")
+        self.stopButton = QtGui.QPushButton("Stop Local Chain")
+        self.flushButton = QtGui.QPushButton("Flush Wallets")
+        self.createWalletButton = QtGui.QPushButton("Create Wallet")
+        self.setOwnerKeyButton = QtGui.QPushButton("Set Owner Key")
+        self.setActiveKeyButton = QtGui.QPushButton("Set Active Key")
+        self.importPrivateKeysButton = QtGui.QPushButton("Import Private Keys")
+        self.setAccountNameButton = QtGui.QPushButton("Account Name")
+        self.createAccountButton = QtGui.QPushButton("Create Account")        
         self.getInfoLabel = QtGui.QLabel()
         self.getInfoLabel.setFrameStyle(frameStyle)
         self.walletNameLabel = QtGui.QLabel()
@@ -197,22 +237,30 @@ class Dialog(QtGui.QDialog):
         self.contractNameLabel.setFrameStyle(frameStyle)    
         self.openFileNameButton = QtGui.QPushButton("Set Contract Steps")
         self.issueButton = QtGui.QPushButton("Issue Currency")
-        self.recipientNameButton = QtGui.QPushButton("Set recipient name")
+        self.recipientNameButton = QtGui.QPushButton("Set Recipient Name")
         self.amountButton = QtGui.QPushButton("Amount")
-        self.issueToAccountButton = QtGui.QPushButton("Issue to account")
-        self.transferToAccountButton = QtGui.QPushButton("Transfer to account")
+        self.issueToAccountButton = QtGui.QPushButton("Issue To Account")
+        self.transferToAccountButton = QtGui.QPushButton("Transfer To Account")
         self.chooseCurrencyButton = QtGui.QPushButton("Set Token Name")
-        self.getInfoButton = QtGui.QPushButton("GetInfo")        
+        self.getInfoButton = QtGui.QPushButton("Get Info")        
         self.getBalanceButton = QtGui.QPushButton("Get Balance")    
         self.getAccountDetailsButton = QtGui.QPushButton("Get Account Details")
-        self.toggleWalletLock = QtGui.QCheckBox("Lock wallet")
+        self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
         self.listWalletsButton = QtGui.QPushButton("List Wallets")
         self.getBlockInfoButton = QtGui.QPushButton("Block Info")
-        self.setBlockNumberButton = QtGui.QPushButton("Set Block number")
+        self.setBlockNumberButton = QtGui.QPushButton("Set Block nNumber")
         self.getActionsButton = QtGui.QPushButton("Get Actions")
         self.listProducersButton = QtGui.QPushButton("Get Block Producers")
         self.getProducerInfoButton = QtGui.QPushButton("Get Block Producer Info")
         self.button = QtGui.QToolButton(self)
+        self.producerBox = QtGui.QComboBox()
+        self.testProducerBox = QtGui.QComboBox()
+        self.producerBox.setObjectName(("Block Producers"))
+        self.testProducerBox.setObjectName(("Test Block Producers"))
+        for i in self.blockchain.producerList:
+            self.producerBox.addItem(i)
+        for i in self.blockchain.testProducerList:
+            self.testProducerBox.addItem(i)
         
         
         
@@ -287,11 +335,12 @@ class Dialog(QtGui.QDialog):
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
-        self.comboBox = QtGui.QComboBox()
-        self.comboBox.setObjectName(("Block Producers"))
-        for i in self.blockchain.producerList:
-            self.comboBox.addItem(i)
-        self.tab1.layout.addWidget(self.comboBox)
+        self.label = QtGui.QLabel("Main Net Block producers")
+        self.tab1.layout.addWidget(self.label)
+        self.tab1.layout.addWidget(self.producerBox)
+        self.label2 = QtGui.QLabel("Test Net Block producers")
+        self.tab1.layout.addWidget(self.label2)
+        self.tab1.layout.addWidget(self.testProducerBox)
         self.tab1.layout.addWidget(self.getProducerInfoButton)            
         self.tab1.setLayout(self.tab1.layout)
  
@@ -480,8 +529,7 @@ class Dialog(QtGui.QDialog):
         if ok and text != '':
             self.order.currency = text
             self.getInfoLabel.setText(text)
-
-    
+ 
     def issueCurrency(self):
         token1 = '{"issuer": "'
         token2 = self.account.name
@@ -570,9 +618,10 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)    
      
     def getProducerInfo(self):
-        self.blockchain.producer = self.comboBox.currentText()
+        self.blockchain.producer = self.producerBox.currentText()
         out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
         self.getInfoLabel.setText(out)
+        
         
     
 if __name__ == '__main__':
