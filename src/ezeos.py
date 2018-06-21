@@ -166,19 +166,20 @@ class Wallet():
     def __init__(self):
         self.name = ""
         self.key = ""
-        self.ownerKey1 = ""
-        self.publicKey1 = ""
-        self.OwnerKey2 = ""
-        self.publicKey2 = ""
+        self.ownerPrivateKey = ""
+        self.ownerPublicKey = ""
+        self.activePrivateKey = ""
+        self.activePublicKey = ""
+        self.eosioKey = "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
         self.locked = False
         
     def reset(self):
          self.name = ""
          self.key = ""
          self.ownerKey1 = ""
-         self.publicKey1 = ""
-         self.ownerKey2 = ""
-         self.publicKey2 = ""
+         self.ownerPublicKey = ""
+         self.activePrivateKey = ""
+         self.activePublicKey = ""
          self.locked = False
         
 
@@ -223,8 +224,8 @@ class Dialog(QtGui.QDialog):
         self.stopButton = QtGui.QPushButton("Stop Local Chain")
         self.flushButton = QtGui.QPushButton("Flush Wallets")
         self.createWalletButton = QtGui.QPushButton("Create Wallet")
-        self.setOwnerKeyButton = QtGui.QPushButton("Set Owner Key")
-        self.setActiveKeyButton = QtGui.QPushButton("Set Active Key")
+        self.setOwnerKeyButton = QtGui.QPushButton("Set Owner Keys")
+        self.setActiveKeyButton = QtGui.QPushButton("Set Active Keys")
         self.importPrivateKeysButton = QtGui.QPushButton("Import Private Keys")
         self.setAccountNameButton = QtGui.QPushButton("Account Name")
         self.createAccountButton = QtGui.QPushButton("Create Account")        
@@ -251,6 +252,7 @@ class Dialog(QtGui.QDialog):
         self.getBlockInfoButton = QtGui.QPushButton("Block Info")
         self.setBlockNumberButton = QtGui.QPushButton("Set Block Number")
         self.getActionsButton = QtGui.QPushButton("Get Actions")
+        self.showKeysButton = QtGui.QPushButton("Show Keys")
         self.listProducersButton = QtGui.QPushButton("Get Block Producers")
         self.getProducerInfoButton = QtGui.QPushButton("Get Block Producer Info")
         self.producerBox = QtGui.QComboBox()
@@ -298,6 +300,7 @@ class Dialog(QtGui.QDialog):
         self.getBlockInfoButton.clicked.connect(self.getBlockInfo)
         self.setBlockNumberButton.clicked.connect(self.setBlockNumber)
         self.getActionsButton.clicked.connect(self.getActions)
+        self.showKeysButton.clicked.connect(self.showKeys)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.getProducerInfoButton.clicked.connect(self.getProducerInfo)
          
@@ -361,9 +364,10 @@ class Dialog(QtGui.QDialog):
         self.tab2.layout.addWidget(self.setOwnerKeyButton)
         self.tab2.layout.addWidget(self.setActiveKeyButton)
         self.tab2.layout.addWidget(self.importPrivateKeysButton)
+        self.tab2.layout.addWidget(self.showKeysButton)
         self.tab2.layout.addWidget(self.toggleWalletLock)
         self.tab2.setLayout(self.tab2.layout)
-    
+
         self.tab3.layout = QtGui.QVBoxLayout(self)
         self.tab3.layout.addWidget(self.setAccountNameButton)
         self.tab3.layout.addWidget(self.createAccountButton)
@@ -382,7 +386,8 @@ class Dialog(QtGui.QDialog):
         self.tab5.layout.addWidget(self.issueButton)
         self.tab5.layout.addWidget(self.recipientNameButton)
         self.tab5.layout.addWidget(self.amountButton)
-        self.tab5.layout.addWidget(self.issueToAccountButton)
+        self.tab5.layout.addWidget(self.issueToAccountButton) 
+        self.getActionsButton.clicked.connect(self.getActions)
         self.tab5.layout.addWidget(self.transferToAccountButton)
         self.tab5.setLayout(self.tab5.layout)
         
@@ -395,6 +400,11 @@ class Dialog(QtGui.QDialog):
         self.setWindowTitle("EZEOS")
         #self.showMaximized()
  
+    
+    def showKeys(self):
+        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + 'EOSIO Key: ' + '\n' + self.wallet.eosioKey 
+        self.getInfoLabel.setText(out)
+    
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
@@ -503,8 +513,8 @@ class Dialog(QtGui.QDialog):
         key2 = key2[:-1]
         f = open( self.wallet.name + "OwnerKeys", 'w' )
         f.write(key)
-        self.wallet.ownerKey1 = key
-        self.wallet.publicKey1 = key2
+        self.wallet.ownerPrivateKey= key
+        self.wallet.ownerPublicKey = key2
         self.getInfoLabel.setText(out)
        
 
@@ -517,14 +527,14 @@ class Dialog(QtGui.QDialog):
         f = open( self.wallet.name + "PrivateKey", 'w' )
         f.write(key)
         f.close()
-        self.wallet.ownerKey2 = key
-        self.wallet.publicKey2 = key2
+        self.wallet.activePrivateKey = key
+        self.wallet.activePublicKey = key2
         self.getInfoLabel.setText(out)
         
     def importPrivateKeys(self):
-        out = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerKey1])
-        out1 = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerKey2])
-        self.getInfoLabel.setText(self.wallet.ownerKey1 +"\n"+ self.wallet.ownerKey2 + "\n" + out + "\n" + out1)
+        out = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerPrivateKey])
+        out1 = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.activePrivateKey])
+        self.getInfoLabel.setText(self.wallet.ownerPrivateKey +"\n"+ self.wallet.activePrivateKey + "\n" + out + "\n" + out1)
         
     def createAccountName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -536,10 +546,11 @@ class Dialog(QtGui.QDialog):
         
     def createAccount(self):
         if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.publicKey1, self.wallet.publicKey2])
+            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'create', 'account', 'eosio', self.account.name, self.wallet.publicKey1, self.wallet.publicKey2])
-        self.getInfoLabel.setText(out)
+            #cleos -u http://130.211.59.178:8888 --wallet-url http://localhost:8899   system newaccount --stake-net "0.1000 EOS" --stake-cpu "0.1000 EOS" --buy-ram-kbytes 8 eosio myDesiredAccountName FIRST_PUB_KEY SECOND_PU_KEY            
+            #out = subprocess.check_output(['cleos', '-u', '130.211.59.178:8888' , '--wallet-url', 'localhost:8899', 'system', 'newaccount', 'eosio' , self.account.name,  self.wallet.ownerPublicKey, self.wallet.activePublicKey ])
+            self.getInfoLabel.setText()
     
     
     def LoadContract(self):
@@ -638,7 +649,6 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['cleos', '-u', '"' + str(self.blockchain.producer) + '"', 'wallet', 'list'])
         self.getInfoLabel.setText(out)
             
-    
     def setBlockNumber(self):    
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Block number:", QtGui.QLineEdit.Normal,
@@ -652,7 +662,8 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def listProducers(self):
-        out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'listproducers'])
+        producerConv = str(self.blockchain.producer) 
+        out = subprocess.check_output(['cleos', '--url', producerConv, 'system', 'listproducers'])
         self.getInfoLabel.setText(out)    
      
     def getProducerInfo(self):
@@ -670,9 +681,7 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText('Switched to main net')
         else:
             self.getInfoLabel.setText("Off the main net")
-            self.blockchain.running = False
-            
-        
+            #self.blockchain.running = False
     def localNet(self):
         if self.toggleLocalNet.checkState() != 0:
             self.stopChain()
@@ -697,6 +706,8 @@ class Dialog(QtGui.QDialog):
             self.toggleMainNet.setChecked(False)
             self.toggleLocalNet.setChecked(False)
             self.getInfoLabel.setText('Switched to test net')
+        else:
+            self.getInfoLabel.setText("Off test net")
         
         
     
