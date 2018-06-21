@@ -70,9 +70,6 @@ import subprocess
 import os
 import pexpect
 
-
-
-
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
 sip.setapi('QString', 2)
@@ -87,7 +84,8 @@ class BlockChain():
         self.net = ['main', 'test', 'local']
         self.block = self.Block()
         self.running = False
-        self.producer = []
+        self.producer = ""
+        self.testProducer = ""
         self.producerList =     [
                                     'https://api.eosnewyork.io:443', 
                                     'https://api.eosdetroit.io:443',
@@ -170,7 +168,6 @@ class Wallet():
         self.ownerPublicKey = ""
         self.activePrivateKey = ""
         self.activePublicKey = ""
-        self.eosioKey = "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
         self.locked = False
         
     def reset(self):
@@ -187,6 +184,9 @@ class Account():
     
     def __init__(self):
         self.name = ""
+        self.creator = "ilpxprqdujjd"
+        self.creatorKey = "EOS7FB9nARMYYJH1cPujnPBVwcm9QySNj54DkdU4rkmctUuZRkrXE"
+        
     def reset(self):
         self.name = ""
     
@@ -211,11 +211,13 @@ class Dialog(QtGui.QDialog):
     
     def __init__(self, parent=None):
         super(Dialog, self).__init__(parent)
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_label)
+        self.timer.start(100)  
         self.wallet = Wallet()
         self.order = Order()
         self.account = Account()
         self.blockchain = BlockChain()
-        self.timer = QtCore.QTimer()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         self.openContractButton = QtGui.QPushButton("Open Contract")    
         self.setWalletNameButton = QtGui.QPushButton("Wallet Name")
@@ -263,6 +265,7 @@ class Dialog(QtGui.QDialog):
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
+    
         self.toggleMainNet = QtGui.QCheckBox("Main Net")
         self.toggleTestNet = QtGui.QCheckBox("Test Net")
         self.toggleLocalNet = QtGui.QCheckBox("Local Net")
@@ -402,7 +405,7 @@ class Dialog(QtGui.QDialog):
  
     
     def showKeys(self):
-        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + 'EOSIO Key: ' + '\n' + self.wallet.eosioKey 
+        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + 'EOSIO Key: ' + '\n' + self.account.creatorKey 
         self.getInfoLabel.setText(out)
     
     
@@ -414,8 +417,10 @@ class Dialog(QtGui.QDialog):
         if self.blockchain.running:
             self.toggleMainNet.setChecked(False)
             self.toggleTestNet.setChecked(False)
-            
+        self.blockchain.producer = self.producerBox.currentText()
+        self.blockchain.testProducer = self.testProducerBox.currentText()
         
+       
     def getActions(self):
         out = subprocess.check_output(['cleos','get', 'actions', self.account.name])   
         self.getInfoLabel.setText(out)
@@ -447,8 +452,7 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText('No chain running')
             self.blockchain.running = False
            
-       
-    
+     
     def startChain(self):
         subprocess.Popen(['xterm', '-e', 'nodeos --resync'])
         self.getInfoLabel.setText('chain started')
@@ -458,8 +462,7 @@ class Dialog(QtGui.QDialog):
         os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
         os.environ['EZEOS_SOURCE'] = home + "/ezeos/src"
         self.blockchain.net = 'local'
-        self.timer.timeout.connect(self.update_label)
-        self.timer.start(100)  # every 10,000 milliseconds
+        
         
         
     def resetChain(self):
@@ -545,12 +548,18 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText(text)
         
     def createAccount(self):
+        out = ''
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
+            print(self.blockchain.producer)
+            print(self.account.creator)
+            print(self.account.name)
+            print(self.wallet.ownerPublicKey)
+            print(self.wallet.activePublicKey)
             #cleos -u http://130.211.59.178:8888 --wallet-url http://localhost:8899   system newaccount --stake-net "0.1000 EOS" --stake-cpu "0.1000 EOS" --buy-ram-kbytes 8 eosio myDesiredAccountName FIRST_PUB_KEY SECOND_PU_KEY            
-            #out = subprocess.check_output(['cleos', '-u', '130.211.59.178:8888' , '--wallet-url', 'localhost:8899', 'system', 'newaccount', 'eosio' , self.account.name,  self.wallet.ownerPublicKey, self.wallet.activePublicKey ])
-            self.getInfoLabel.setText()
+            #out = subprocess.check_output(['cleos', '-u', self.blockchain.producer , 'system', 'newaccount', self.account.creator , self.account.name,  self.wallet.ownerPublicKey, self.wallet.activePublicKey ])
+        self.getInfoLabel.setText(out)
     
     
     def LoadContract(self):
@@ -662,14 +671,27 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def listProducers(self):
-        producerConv = str(self.blockchain.producer) 
-        out = subprocess.check_output(['cleos', '--url', producerConv, 'system', 'listproducers'])
+        out = ''
+        if self.blockchain.net == 'test':
+            producerConv = 'https://' + self.blockchain.testProducer
+            print(producerConv)
+            out = subprocess.check_output(['cleos', '--url', 'https://dc1.eosemerge.io:5443' , 'system', 'listproducers'])
+        elif self.blockchain.net == 'main' :
+            producerConv = self.blockchain.producer
+            print(producerConv)
+            out = subprocess.check_output(['cleos', '--url', 'https://dc1.eosemerge.io:5443', 'system', 'listproducers'])
         self.getInfoLabel.setText(out)    
      
-    def getProducerInfo(self):
-        self.blockchain.producer = self.producerBox.currentText()
-        out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
-        self.getInfoLabel.setText(out)
+    def getProducerInfo(self): 
+        out = ''
+        if self.blockchain.net == 'test':
+            producerConv = 'https://' + self.blockchain.testProducer
+            print(producerConv)
+            out = subprocess.check_output(['cleos', '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
+            self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
+        elif self.blockchain.net == 'main' :
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
+            self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
     def mainNet(self):
         if self.toggleMainNet.checkState() != 0:
             self.stopChain()
