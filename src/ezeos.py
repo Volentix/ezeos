@@ -514,8 +514,12 @@ class Dialog(QtGui.QDialog):
         key = key[:-67]
         key2 = out[77:]
         key2 = key2[:-1]
-        f = open( self.wallet.name + "OwnerKeys", 'w' )
+        f = open( self.wallet.name + "ownerPrivateKeys", 'w' )
         f.write(key)
+        f.close()
+        f = open( self.wallet.name + "ownerPublicKeys", 'w' )
+        f.write(key2)
+        f.close()
         self.wallet.ownerPrivateKey= key
         self.wallet.ownerPublicKey = key2
         self.getInfoLabel.setText(out)
@@ -527,8 +531,11 @@ class Dialog(QtGui.QDialog):
         key = key[:-67]
         key2 = out[77:]
         key2 = key2[:-1]
-        f = open( self.wallet.name + "PrivateKey", 'w' )
+        f = open( self.wallet.name + "ActivePrivateKey", 'w' )
         f.write(key)
+        f.close()
+        f = open( self.wallet.name + "ActivePublicKey", 'w' )
+        f.write(key2)
         f.close()
         self.wallet.activePrivateKey = key
         self.wallet.activePublicKey = key2
@@ -552,13 +559,8 @@ class Dialog(QtGui.QDialog):
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
-            print(self.blockchain.producer)
-            print(self.account.creator)
-            print(self.account.name)
-            print(self.wallet.ownerPublicKey)
-            print(self.wallet.activePublicKey)
             #cleos -u http://130.211.59.178:8888 --wallet-url http://localhost:8899   system newaccount --stake-net "0.1000 EOS" --stake-cpu "0.1000 EOS" --buy-ram-kbytes 8 eosio myDesiredAccountName FIRST_PUB_KEY SECOND_PU_KEY            
-            #out = subprocess.check_output(['cleos', '-u', self.blockchain.producer , 'system', 'newaccount', self.account.creator , self.account.name,  self.wallet.ownerPublicKey, self.wallet.activePublicKey ])
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer , 'system', 'newaccount', self.account.creator, self.account.name, self.account.creatorKey, self.wallet.activePublicKey, '-p', self.account.creator , '--stake-net', '0.0001 EOS', '--stake-cpu', '0.0001 EOS', '--buy-ram-EOS', '0.0001 EOS' ])
         self.getInfoLabel.setText(out)
     
     
@@ -644,7 +646,14 @@ class Dialog(QtGui.QDialog):
         
     def getAccountDetails(self):
         
-        out = subprocess.check_output(['cleos', 'get', 'account', self.account.name ])
+        out = ''
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'get', 'account', self.account.name ])
+        elif self.blockchain.net == 'main' :
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
+        self.getInfoLabel.setText(out)    
+        
+        
         self.getInfoLabel.setText(out)
     
     def getBalance(self):
