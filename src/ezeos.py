@@ -184,8 +184,9 @@ class Account():
     
     def __init__(self):
         self.name = ""
-        self.creator = "ilpxprqdujjd"
-        self.creatorKey = "EOS7FB9nARMYYJH1cPujnPBVwcm9QySNj54DkdU4rkmctUuZRkrXE"
+        self.creator = "volentixtst1"
+        self.creatorKey = "EOS4v5igvyWEcfcqj8pSG1LKKrcSxqz8KAVJukHGY17nWWfnidBxw"
+                            
         
     def reset(self):
         self.name = ""
@@ -558,9 +559,9 @@ class Dialog(QtGui.QDialog):
         out = ''
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
-            #cleos -u http://130.211.59.178:8888 --wallet-url http://localhost:8899   system newaccount --stake-net "0.1000 EOS" --stake-cpu "0.1000 EOS" --buy-ram-kbytes 8 eosio myDesiredAccountName FIRST_PUB_KEY SECOND_PU_KEY            
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer , 'system', 'newaccount', self.account.creator, self.account.name, self.account.creatorKey, self.wallet.activePublicKey, '-p', self.account.creator , '--stake-net', '0.0001 EOS', '--stake-cpu', '0.0001 EOS', '--buy-ram-EOS', '0.0001 EOS' ])
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer , 'system', 'newaccount', self.account.creator, self.account.name, self.account.creatorKey, self.wallet.activePublicKey, '--stake-net', '0.0001 EOS', '--stake-cpu', '0.0001 EOS', '--buy-ram-EOS', '0.0001 EOS', '-p', self.account.creator])
+            #out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', '--stake-net', '0.0001 EOS', '--stake-cpu', '0.0001 EOS', '--buy-ram-kbytes', '8', self.account.creator, self.account.name, self.account.creatorKey, self.wallet.activePublicKey])
         self.getInfoLabel.setText(out)
     
     
@@ -654,11 +655,18 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)    
         
         
-        self.getInfoLabel.setText(out)
+       
     
     def getBalance(self):
-        out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', self.order.contractAccountName, self.account.name, self.order.currency ])
-        self.getInfoLabel.setText(out)
+       
+        out = ''
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', self.order.contractAccountName, self.account.name, self.order.currency ])
+
+        elif self.blockchain.net == 'main' :
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
+           
+        self.getInfoLabel.setText(out)    
     
     def listWallets(self):
         if self.blockchain.net == 'local':
