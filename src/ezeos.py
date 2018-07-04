@@ -178,6 +178,7 @@ class Wallet():
         self.activePrivateKey = ""
         self.activePublicKey = ""
         self.locked = False
+        self.url = "http://localhost:8888"
         
     def reset(self):
          self.name = ""
@@ -210,7 +211,7 @@ class Order():
         self.contractAccountName = ""
         self.stakeCPU = ""
         self.stakeBandWidth = ""
-        self.buyRam = ""
+        self.buyRam = 0
     def reset(self):
         self.to = ""
         self.amount = 0.0000
@@ -297,7 +298,7 @@ class Dialog(QtGui.QDialog):
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
         
-        
+        self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
         self.getAccountDetailsButton.clicked.connect(self.getAccountDetails)
@@ -437,12 +438,8 @@ class Dialog(QtGui.QDialog):
  
     
     def showKeys(self):
-        ownerPublicKey = self.wallet.name + 'ownerPublicKeys'
-        activePublicKey = self.wallet.name + 'ActivePublicKey'
-        self.wallet.ownerPublicKey = subprocess.check_output(['cat', ownerPublicKey]) 
-        self.wallet.activePublicKey = subprocess.check_output(['cat', activePublicKey]) 
-        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
-        self.getInfoLabel.setText(out)
+        out = 'Owner Public Key: ' + '\n' + str(self.wallet.ownerPublicKey) + '\n'  + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
+        self.getInfoLabel.setText(str(out))
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
@@ -617,13 +614,9 @@ class Dialog(QtGui.QDialog):
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            print('********************************************')
-            #out = subprocess.check_output(['cleos', '--url', self.blockchain.producer , 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '--stake-net', '0.1 EOS', '--stake-cpu', '0.1 EOS', '--buy-ram-kbytes', '8', '-p', self.account.creator])
-            #out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', '--stake-net', '0.1 EOS', '--stake-cpu', '0.1 EOS', '--buy-ram-EOS',0.0001 EOS', self.account.creator, self.account.name, self.account.creatorKey, self.wallet.activePublicKey])
-            #cleos -u https://api.cypherglass.com system newaccount -x 1000 --stake-net "0.1 EOS" --stake-cpu "0.1 EOS" --buy-ram-kbytes 8 xxAlice xxBob BOBSPUB BOBSPUB
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-bytes', self.order.buyRam, '--transfer', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '-p', self.account.creator])
+            permission = self.account.creator + '@active'
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
         self.getInfoLabel.setText(out)
-    
     
     def LoadContract(self):
         options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
@@ -632,13 +625,16 @@ class Dialog(QtGui.QDialog):
                 self.getInfoLabel.text(), options)
         self.order.contract = directory
         self.order.contractAccountName = os.path.basename(directory)
-            
         self.getInfoLabel.setText(directory)
         
     def setContractSteps(self):
-        out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name,  self.order.contract, '-p', self.account.name ])
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name,  self.order.contract, '-p', self.account.name ])
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+            permission = self.account.creator + '@active'
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
         self.getInfoLabel.setText(out)
-
+        
     def chooseCurrency(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Token name:", QtGui.QLineEdit.Normal,
