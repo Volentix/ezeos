@@ -181,13 +181,13 @@ class Wallet():
         self.url = "http://localhost:8888"
         
     def reset(self):
-         self.name = ""
-         self.key = ""
-         self.ownerPrivateKey = ""
-         self.ownerPublicKey = ""
-         self.activePrivateKey = ""
-         self.activePublicKey = ""
-         self.locked = False
+        self.name = ""
+        self.key = ""
+        self.ownerPrivateKey = ""
+        self.ownerPublicKey = ""
+        self.activePrivateKey = ""
+        self.activePublicKey = ""
+        self.locked = False
         
 
 class Account():
@@ -195,6 +195,7 @@ class Account():
     def __init__(self):
         self.name = ""
         self.creator = ""
+        self.receiver = ""
         self.creatorOwnerKey = ""
         self.creatorActiveKey = ""
                             
@@ -241,7 +242,7 @@ class Dialog(QtGui.QDialog):
         self.restartButton = QtGui.QPushButton("Reset Local Chain")
         self.startButton = QtGui.QPushButton("Start Local Chain")
         self.stopButton = QtGui.QPushButton("Stop Local Chain")
-        self.flushButton = QtGui.QPushButton("Flush Wallets")
+        self.flushButton = QtGui.QPushButton("Flush Wallets (Deactivated)")
         self.createWalletButton = QtGui.QPushButton("Create Wallet")
         self.setOwnerKeyButton = QtGui.QPushButton("Create Owner Keys")
         self.setActiveKeyButton = QtGui.QPushButton("Create Active Keys")
@@ -251,7 +252,10 @@ class Dialog(QtGui.QDialog):
         self.setStakeCPUAmountButton = QtGui.QPushButton("Stake CPU amount")
         self.setStakeBandWidthAmountButton = QtGui.QPushButton("Stake Bandwidth amount")
         self.setBuyRAMAmountButton = QtGui.QPushButton("buy RAM")
-        self.createAccountButton = QtGui.QPushButton("Create Account")        
+        self.createAccountButton = QtGui.QPushButton("Create Account")
+        self.setSendAmountButton = QtGui.QPushButton("Set Send Amount")
+        self.setSendRecipientAccountButton = QtGui.QPushButton("Set Recipient Account")
+        self.sendAmountButton = QtGui.QPushButton("Send Funds")        
         self.getInfoLabel = QtGui.QLabel()
         self.getInfoLabel.setFrameStyle(frameStyle)
         self.walletNameLabel = QtGui.QLabel()
@@ -333,7 +337,9 @@ class Dialog(QtGui.QDialog):
         self.showKeysButton.clicked.connect(self.showKeys)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.getProducerInfoButton.clicked.connect(self.getProducerInfo)
-         
+        self.setSendAmountButton.clicked.connect(self.setSendAmount)
+        self.setSendRecipientAccountButton.clicked.connect(self.setRecipientAccount) 
+        self.sendAmountButton.clicked.connect(self.sendToAccount)
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
         self.native.setChecked(True)
@@ -407,6 +413,9 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.setStakeBandWidthAmountButton)
         self.tab3.layout.addWidget(self.setBuyRAMAmountButton)
         self.tab3.layout.addWidget(self.createAccountButton)
+        self.tab3.layout.addWidget(self.setSendAmountButton)
+        self.tab3.layout.addWidget(self.setSendRecipientAccountButton)
+        self.tab3.layout.addWidget(self.sendAmountButton)
         self.tab3.layout.addWidget(self.getAccountDetailsButton)
         self.tab3.layout.addWidget(self.getActionsButton)
         self.tab3.layout.addWidget(self.getBalanceButton)
@@ -460,16 +469,12 @@ class Dialog(QtGui.QDialog):
     
     def lockWallet(self):
         if self.wallet.locked == False:
-            print('Lock')
             subprocess.check_output(['cleos','wallet', 'lock','-n', self.wallet.name])
             self.wallet.locked = True
             self.listWallets()
         else:
-            print('unLock')
             child = pexpect.spawn('cleos', ['wallet', 'unlock', '-n', self.wallet.name])
-            print('unLock2')
             child.expect('password:')
-            print('unLock3')
             out = subprocess.check_output(['cat', os.environ['EZEOS_SOURCE'] +'/'+ self.wallet.name]) 
             child.sendline(out)
             child.expect(pexpect.EOF)
@@ -477,8 +482,7 @@ class Dialog(QtGui.QDialog):
             self.listWallets()
             self.wallet.locked = False
         
-    def stopChain(self):
-         
+    def stopChain(self):    
         try:
             subprocess.check_output(['killall','nodeos'])
             self.getInfoLabel.setText('Chain stopped')
@@ -524,12 +528,12 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText(out)
     
     def setWalletPublicKeys(self):
-       ownerPublicKey = self.wallet.name + 'ownerPublicKeys'
-       activePublicKey = self.wallet.name + 'ActivePublicKey'
-       self.wallet.ownerPublicKey = subprocess.check_output(['cat', ownerPublicKey]) 
-       self.wallet.activePublicKey = subprocess.check_output(['cat', activePublicKey]) 
-       out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
-       self.getInfoLabel.setText(out)
+        ownerPublicKey = self.wallet.name + 'ownerPublicKeys'
+        activePublicKey = self.wallet.name + 'ActivePublicKey'
+        self.wallet.ownerPublicKey = subprocess.check_output(['cat', ownerPublicKey]) 
+        self.wallet.activePublicKey = subprocess.check_output(['cat', activePublicKey]) 
+        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
+        self.getInfoLabel.setText(out)
     
     def createWallet(self):
         createAccount = os.environ['HOME'] + '/eosio-wallet'
@@ -631,8 +635,7 @@ class Dialog(QtGui.QDialog):
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name,  self.order.contract, '-p', self.account.name ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            permission = self.account.creator + '@active'
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
         self.getInfoLabel.setText(out)
         
     def chooseCurrency(self):
@@ -662,7 +665,23 @@ class Dialog(QtGui.QDialog):
             self.order.name = text
             self.getInfoLabel.setText(text)
     
+    def setRecipientAccount(self):
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Recipient name:", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            self.account.receiver = text
+            self.getInfoLabel.setText(text)
+    
     def setAmount(self):
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Currency Amount:", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            self.order.amount = text 
+            self.getInfoLabel.setText(self.order.amount)
+    
+    def setSendAmount(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Currency Amount:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
@@ -695,7 +714,6 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText(self.order.buyRam)
            
     def issueToAccount(self):
-        out = subprocess.check_output(['cleos', 'get', 'account', self.account.name])
         token1 = '{"to": "'
         token2 = self.order.name
         token3 = '", "quantity": "'
@@ -706,16 +724,25 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def transferToAccount(self):
-        out = subprocess.check_output(['cleos', 'get', 'account', self.account.name ])
         token1 = '{"to": "'
         token2 = self.order.name
         token3 = '", "quantity": "'
         token4 = self.order.amount
         token5 = '", "memo": "testing"}'
         finalToken = token1 + token2 + token3 + str(token4) + token5
-        out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name]) # + '@active']) 
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name]) 
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name ])
         self.getInfoLabel.setText(out)
-    
+   
+    def sendToAccount(self):
+        out = ''
+        if self.blockchain.net == 'local':
+            out = subprocess.check_output(['cleos', 'transfer', self.account.name, self.account.receiver, self.order.amount]) 
+        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
+        self.getInfoLabel.setText(out)
     def flushWallets(self):
         #subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
         #self.getInfoLabel.setText("Deleted Wallets")
