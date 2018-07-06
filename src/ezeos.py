@@ -251,7 +251,8 @@ class Dialog(QtGui.QDialog):
         self.setCreatorAccountNameButton = QtGui.QPushButton("Creator Account Name")
         self.setStakeCPUAmountButton = QtGui.QPushButton("Stake CPU amount")
         self.setStakeBandWidthAmountButton = QtGui.QPushButton("Stake Bandwidth amount")
-        self.setBuyRAMAmountButton = QtGui.QPushButton("buy RAM")
+        self.buyRAMButton = QtGui.QPushButton("Buy RAM")
+        self.setBuyRAMAmountButton = QtGui.QPushButton("Set RAM Amount")
         self.createAccountButton = QtGui.QPushButton("Create Account")
         self.setSendAmountButton = QtGui.QPushButton("Set Send Amount")
         self.setSendRecipientAccountButton = QtGui.QPushButton("Set Recipient Account")
@@ -321,6 +322,7 @@ class Dialog(QtGui.QDialog):
         self.setStakeCPUAmountButton.clicked.connect(self.setStakeCPUAmount)
         self.setStakeBandWidthAmountButton.clicked.connect(self.setStakeBandWidthAmount)
         self.setBuyRAMAmountButton.clicked.connect(self.setBuyRAMAmount)
+        self.buyRAMButton.clicked.connect(self.buyRAM)
         self.createAccountButton.clicked.connect(self.createAccount)
         self.openContractButton.clicked.connect(self.LoadContract)
         self.openFileNameButton.clicked.connect(self.setContractSteps)
@@ -412,6 +414,7 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
         self.tab3.layout.addWidget(self.setStakeBandWidthAmountButton)
         self.tab3.layout.addWidget(self.setBuyRAMAmountButton)
+        self.tab3.layout.addWidget(self.buyRAMButton)
         self.tab3.layout.addWidget(self.createAccountButton)
         self.tab3.layout.addWidget(self.setSendAmountButton)
         self.tab3.layout.addWidget(self.setSendRecipientAccountButton)
@@ -712,7 +715,14 @@ class Dialog(QtGui.QDialog):
         if ok and text != '':
             self.order.buyRam = text 
             self.getInfoLabel.setText(self.order.buyRam)
-           
+    
+    def buyRAM(self):       
+    #cleos system buyram payer receiver tokens
+        out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'buyram', self.account.name, self.account.receiver, self.order.buyRam])
+        self.getInfoLabel.setText(out)
+    
+    
+    
     def issueToAccount(self):
         token1 = '{"to": "'
         token2 = self.order.name
