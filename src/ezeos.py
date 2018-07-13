@@ -188,28 +188,10 @@ class Wallet():
         self.activePrivateKey = ""
         self.activePublicKey = ""
         self.locked = False
-    def createWallet(self):
-        createAccount = os.environ['HOME'] + '/eosio-wallet'
-        if not os.path.exists(createAccount):
-            os.makedirs(createAccount)
-#         if self.blockchain.net == 'test' or self.blockchain.net == 'main':
-#             out = subprocess.check_output(['cleos','-u', '"' + str(self.blockchain.producer) + '"' ,'wallet', 'create', '-n', self.wallet.name])
-#         else:
-        out = subprocess.check_output(['cleos','wallet', 'create', '-n', self.wallet.name])
-        f = open( self.wallet.name, 'w' )
-        f.write(out)
-        f.close()
-        line = subprocess.check_output(['tail', '-1', self.wallet.name])
-        line = line.replace('"', '')
-        f = open( self.wallet.name, 'w' )
-        f.write(line)
-        f.close()
-        self.wallet.key = line
-        self.wallet.locked = False
-        cwd = os.getcwd()
-        text = ' saved to ' + cwd
-        self.getInfoLabel.setText('private key ' + text)
-        return out 
+    
+    def testFunction(self):
+        print('testfunc')
+        
         
 
 class Account():
@@ -259,6 +241,7 @@ class Dialog(QtGui.QDialog):
         self.blockchain = BlockChain()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         
+        self.TestFunctionButton = QtGui.QPushButton("TestFunction")
         self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet")
         self.openContractButton = QtGui.QPushButton("Open Contract")    
         self.setWalletNameButton = QtGui.QPushButton("Wallet Name") 
@@ -328,7 +311,7 @@ class Dialog(QtGui.QDialog):
         self.toggleLocalNet.toggled.connect(self.localNet)
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
-        
+        self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
@@ -402,6 +385,7 @@ class Dialog(QtGui.QDialog):
         self.tabs.addTab(self.tab3,"Accounts")
         self.tabs.addTab(self.tab4,"Contract")
         self.tabs.addTab(self.tab5,"eosio.token")
+        self.tabs.addTab(self.tab6,"test")
         
  
        
@@ -471,9 +455,9 @@ class Dialog(QtGui.QDialog):
         self.tab5.setLayout(self.tab5.layout)
         
         self.tab6.layout = QtGui.QVBoxLayout(self) 
-    
+        self.tab6.layout.addWidget(self.TestFunctionButton)
         self.tab6.setLayout(self.tab6.layout)
-
+        
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
