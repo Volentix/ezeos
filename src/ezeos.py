@@ -69,9 +69,9 @@
 import subprocess
 import os
 import pexpect
-import json
-import time
-from pprint import pprint
+#import json
+#import time
+#from pprint import pprint
 
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
@@ -83,7 +83,7 @@ from PyQt4 import QtCore, QtGui
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
-os.environ['EZEOS_SOURCE'] = home + "/ezeos/src"
+os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 
 class BlockChain():
     class Block():
@@ -188,6 +188,28 @@ class Wallet():
         self.activePrivateKey = ""
         self.activePublicKey = ""
         self.locked = False
+    def createWallet(self):
+        createAccount = os.environ['HOME'] + '/eosio-wallet'
+        if not os.path.exists(createAccount):
+            os.makedirs(createAccount)
+#         if self.blockchain.net == 'test' or self.blockchain.net == 'main':
+#             out = subprocess.check_output(['cleos','-u', '"' + str(self.blockchain.producer) + '"' ,'wallet', 'create', '-n', self.wallet.name])
+#         else:
+        out = subprocess.check_output(['cleos','wallet', 'create', '-n', self.wallet.name])
+        f = open( self.wallet.name, 'w' )
+        f.write(out)
+        f.close()
+        line = subprocess.check_output(['tail', '-1', self.wallet.name])
+        line = line.replace('"', '')
+        f = open( self.wallet.name, 'w' )
+        f.write(line)
+        f.close()
+        self.wallet.key = line
+        self.wallet.locked = False
+        cwd = os.getcwd()
+        text = ' saved to ' + cwd
+        self.getInfoLabel.setText(line + text)
+        return out 
         
 
 class Account():
@@ -265,7 +287,8 @@ class Dialog(QtGui.QDialog):
         self.accountNameLabel.setFrameStyle(frameStyle)
         self.contractNameLabel = QtGui.QLabel()
         self.contractNameLabel.setFrameStyle(frameStyle)    
-        self.openFileNameButton = QtGui.QPushButton("Set Contract Steps")
+        self.openFileNameButton = QtGui.QPushButton("Load Contract")
+        self.loadEosioContractButton = QtGui.QPushButton("Load EosioContract")
         self.issueButton = QtGui.QPushButton("Issue Currency")
         self.recipientNameButton = QtGui.QPushButton("Set Recipient Name")
         self.amountButton = QtGui.QPushButton("Amount")
@@ -342,6 +365,7 @@ class Dialog(QtGui.QDialog):
         self.setSendAmountButton.clicked.connect(self.setSendAmount)
         self.setSendRecipientAccountButton.clicked.connect(self.setRecipientAccount) 
         self.sendAmountButton.clicked.connect(self.sendToAccount)
+        self.loadEosioContractButton.clicked.connect(self.loadEosioContract)
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
         self.native.setChecked(True)
@@ -429,7 +453,8 @@ class Dialog(QtGui.QDialog):
         self.tab4.layout.addWidget(self.openFileNameButton)
         self.tab4.setLayout(self.tab4.layout)
     
-        self.tab5.layout = QtGui.QVBoxLayout(self) 
+        self.tab5.layout = QtGui.QVBoxLayout(self)
+        self.tab5.layout.addWidget(self.loadEosioContractButton) 
         self.tab5.layout.addWidget(self.chooseCurrencyButton)
         self.tab5.layout.addWidget(self.issueButton)
         self.tab5.layout.addWidget(self.recipientNameButton)
@@ -446,8 +471,16 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
-        self.showMaximized()
+        #self.showMaximized()
  
+    
+    
+
+    def loadEosioContract(self):
+        #cleos set contract eosio build/contracts/eosio.bios -p eosio
+        out = subprocess.check_output(['cleos','set', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio'])   
+        self.getInfoLabel.setText(out)
+    
     
     def showKeys(self):
         out = 'Owner Public Key: ' + '\n' + str(self.wallet.ownerPublicKey) + '\n'  + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
@@ -496,17 +529,16 @@ class Dialog(QtGui.QDialog):
            
      
     def startChain(self):
-        subprocess.Popen(['xterm', '-e', 'nodeos --resync'])
+        subprocess.Popen(['xterm', '-e', '/usr/local/bin/nodeos', '--delete-all-blocks'])
         self.getInfoLabel.setText('chain started')
         self.blockchain.running = True
         self.blockchain.net = 'local'
-        
-        
-        
+       
+          
     def resetChain(self):
         out = ''
         try:
-            out = subprocess.check_output(['rm', '-rf', '$EOS_NODEOS' + 'data'])          
+            out = subprocess.check_output(['rm', '-rf', os.environ['EOS_NODEOS'] + 'data'])          
         except:
             print('Already reset')
         self.blockchain.running = False   
@@ -559,6 +591,7 @@ class Dialog(QtGui.QDialog):
         cwd = os.getcwd()
         text = ' saved to ' + cwd
         self.getInfoLabel.setText(line + text)
+        return out 
     
 
     def setOwnerKey(self):    
@@ -619,7 +652,7 @@ class Dialog(QtGui.QDialog):
     def createAccount(self):
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey])
+            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', '-n', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
             permission = self.account.creator + '@active'
             out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
@@ -754,9 +787,9 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
         self.getInfoLabel.setText(out)
     def flushWallets(self):
-        #subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
-        #self.getInfoLabel.setText("Deleted Wallets")
-        self.getInfoLabel.setText("Are you sure you want to do this? How about you go and delete ~/eosio-wallet/ by hand" + "\n" + "This version is used to prototype with accounts on the main net")
+        subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
+        self.getInfoLabel.setText("Deleted Wallets")
+        #self.getInfoLabel.setText("Are you sure you want to do this? How about you go and delete ~/eosio-wallet/ by hand" + "\n" + "This version is used to prototype with accounts on the main net")
         
     def getInfo(self):
         out = subprocess.check_output(['cleos', 'get', 'info'])
