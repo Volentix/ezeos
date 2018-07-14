@@ -69,6 +69,7 @@
 import subprocess
 import os
 import pexpect
+import glob
 #import json
 #import time
 #from pprint import pprint
@@ -82,7 +83,7 @@ from PyQt4 import QtCore, QtGui
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
-os.environ['EOS_NODEOS'] = home + ".local/share/eosio/nodeos/"
+os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 
 class BlockChain():
@@ -192,7 +193,7 @@ class Wallet():
     def testFunction(self):
         print('testfunc')
         
-        
+   
 
 class Account():
     
@@ -243,6 +244,7 @@ class Dialog(QtGui.QDialog):
         
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
         self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet")
+        self.createEosioTokenAccountButton = QtGui.QPushButton("Create eosio.token account")
         self.openContractButton = QtGui.QPushButton("Open Contract")    
         self.setWalletNameButton = QtGui.QPushButton("Wallet Name") 
         self.openWalletNameButton = QtGui.QPushButton("Open Wallet") 
@@ -250,7 +252,7 @@ class Dialog(QtGui.QDialog):
         self.restartButton = QtGui.QPushButton("Reset Local Chain")
         self.startButton = QtGui.QPushButton("Start Local Chain")
         self.stopButton = QtGui.QPushButton("Stop Local Chain")
-        self.flushButton = QtGui.QPushButton("Flush Wallets (Deactivated)")
+        self.flushButton = QtGui.QPushButton("Flush Wallets")
         self.createWalletButton = QtGui.QPushButton("Create Wallet")
         self.setOwnerKeyButton = QtGui.QPushButton("Create Owner Keys")
         self.setActiveKeyButton = QtGui.QPushButton("Create Active Keys")
@@ -305,13 +307,13 @@ class Dialog(QtGui.QDialog):
         self.toggleTestNet = QtGui.QCheckBox("Test Net")
         self.toggleLocalNet = QtGui.QCheckBox("Local Net")
         self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
-        
+        self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.toggleMainNet.toggled.connect(self.mainNet)
         self.toggleTestNet.toggled.connect(self.testNet)
         self.toggleLocalNet.toggled.connect(self.localNet)
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
-        self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
+       
         self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
@@ -353,6 +355,7 @@ class Dialog(QtGui.QDialog):
         self.sendAmountButton.clicked.connect(self.sendToAccount)
         self.loadEosioContractButton.clicked.connect(self.loadEosioContract)
         self.createEosioWalletButton.clicked.connect(self.createEosioWallet)
+        self.createEosioTokenAccountButton.clicked.connect(self.createEosioTokenAccount)
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
         self.native.setChecked(True)
@@ -435,16 +438,17 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.getAccountDetailsButton)
         self.tab3.layout.addWidget(self.getActionsButton)
         self.tab3.layout.addWidget(self.getBalanceButton)
-        
+        self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QtGui.QVBoxLayout(self)
+        self.tab4.layout.addWidget(self.loadEosioContractButton) 
         self.tab4.layout.addWidget(self.openContractButton)
         self.tab4.layout.addWidget(self.openFileNameButton)
         self.tab4.setLayout(self.tab4.layout)
     
         self.tab5.layout = QtGui.QVBoxLayout(self)
-        self.tab5.layout.addWidget(self.loadEosioContractButton) 
+        
         self.tab5.layout.addWidget(self.chooseCurrencyButton)
         self.tab5.layout.addWidget(self.issueButton)
         self.tab5.layout.addWidget(self.recipientNameButton)
@@ -463,6 +467,16 @@ class Dialog(QtGui.QDialog):
         self.setWindowTitle("EZEOS")
         #self.showMaximized()
  
+    
+    def createEosioTokenAccount(self):
+        self.wallet.name = 'eosio.token'
+        self.createWallet()
+        self.setOwnerKey()
+        self.setActiveKey()
+        self.importKeys()
+        subprocess.check_output(['cleos', 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])   
+        #cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+    
     
     def createEosioWallet(self):
        
@@ -539,6 +553,7 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['rm', '-rf', os.environ['EOS_NODEOS'] + 'data'])          
         except:
             print('Already reset')
+        print(os.environ['EOS_NODEOS'] + 'data')
         self.blockchain.running = False   
         self.getInfoLabel.setText('Chain reset' + str(out))
         self.account.reset()
@@ -648,9 +663,10 @@ class Dialog(QtGui.QDialog):
         
         
     def createAccount(self):
+    
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', '-n', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
+            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
             permission = self.account.creator + '@active'
             out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
@@ -666,6 +682,7 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(directory)
         
     def setContractSteps(self):
+        out = ''
         if self.blockchain.net == 'local':
             out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name,  self.order.contract, '-p', self.account.name ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
@@ -755,11 +772,12 @@ class Dialog(QtGui.QDialog):
     
     
     def issueToAccount(self):
-        token1 = '{"to": "'
+        #cleos push action eosio.token issue '[ "user", "100.0000 SYS", "memo" ]' -p eosio
+        token1 = '[ "'
         token2 = self.order.name
-        token3 = '", "quantity": "'
+        token3 = '", "'
         token4 = self.order.amount
-        token5 = '", "memo": "testing"}'
+        token5 = '", "memo"]'
         finalToken = token1 + token2 + token3 + str(token4) + token5
         out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'issue', finalToken, '-p', self.account.name]) # + '@active']) 
         self.getInfoLabel.setText(out)
@@ -786,6 +804,13 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     def flushWallets(self):
         subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
+        environ = os.environ['EZEOS_SOURCE'] + '/*'
+        self.getInfoLabel.setText(environ)
+        for CleanUp in glob.glob(environ):
+            if CleanUp.endswith('.py'):    
+                continue
+            else:
+                os.remove(CleanUp)
         self.getInfoLabel.setText("Deleted Wallets")
         #self.getInfoLabel.setText("Are you sure you want to do this? How about you go and delete ~/eosio-wallet/ by hand" + "\n" + "This version is used to prototype with accounts on the main net")
         
@@ -805,7 +830,7 @@ class Dialog(QtGui.QDialog):
     def getBalance(self):   
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', self.order.contractAccountName, self.account.name, self.order.currency ])
+            out = subprocess.check_output(['cleos', 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])       
         self.getInfoLabel.setText(out)    
