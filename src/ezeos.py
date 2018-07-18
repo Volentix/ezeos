@@ -70,6 +70,10 @@ import subprocess
 import os
 import pexpect
 import glob
+from Crypto import Random
+from Crypto.PublicKey import RSA
+import base64
+
 #import json
 #import time
 #from pprint import pprint
@@ -191,7 +195,37 @@ class Wallet():
         self.locked = False
     
     def testFunction(self):
+        self.testEncryption()
         print('testfunc')
+    def generate_keys(self):
+        # RSA modulus length must be a multiple of 256 and >= 1024
+        modulus_length = 256*4 # use larger value in production
+        privatekey = RSA.generate(modulus_length, Random.new().read)
+        publickey = privatekey.publickey()
+        return privatekey, publickey
+    
+    def encrypt_message(self, a_message , publickey):
+        encrypted_msg = publickey.encrypt(a_message, 32)[0]
+        encoded_encrypted_msg = base64.b64encode(encrypted_msg) # base64 encoded strings are database friendly
+        return encoded_encrypted_msg
+    
+    def decrypt_message(self, encoded_encrypted_msg, privatekey):
+        decoded_encrypted_msg = base64.b64decode(encoded_encrypted_msg)
+        decoded_decrypted_msg = privatekey.decrypt(decoded_encrypted_msg)
+        return decoded_decrypted_msg   
+    
+    def testEncryption(self):
+        a_message = "message"
+        privatekey = 'abcd'#self.activePrivateKey 
+        publickey = 'efgh'#self.activePublicKey
+        encrypted_msg = self.encrypt_message(a_message , publickey)
+        decrypted_msg = self.decrypt_message(encrypted_msg, privatekey)
+
+        print "%s - (%d)" % (privatekey.exportKey() , len(privatekey.exportKey()))
+        print "%s - (%d)" % (publickey.exportKey() , len(publickey.exportKey()))
+        print " Original content: %s - (%d)" % (a_message, len(a_message))
+        print "Encrypted message: %s - (%d)" % (encrypted_msg, len(encrypted_msg))
+        print "Decrypted message: %s - (%d)" % (decrypted_msg, len(decrypted_msg))
         
    
 
@@ -468,6 +502,18 @@ class Dialog(QtGui.QDialog):
         #self.showMaximized()
  
     
+    
+    #def setMultiSiGAccount(self):    
+        
+#./cleos set account permission testmultisig owner 
+#'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
+#{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
+#"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
+    
+    
+    
+    
+    
     def createEosioTokenAccount(self):
         self.wallet.name = 'eosio.token'
         self.createWallet()
@@ -495,8 +541,12 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def showKeys(self):
-        out = 'Owner Public Key: ' + '\n' + str(self.wallet.ownerPublicKey) + '\n'  + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
-        self.getInfoLabel.setText(str(out))
+        #out = 'Owner Public Key: ' + '\n' + str(self.wallet.ownerPublicKey) + '\n'  + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey
+        subprocess.check_output(['cleos','wallet', 'lock_all']) 
+        self.wallet.locked = True
+        self.lockWallet()
+        out = subprocess.check_output(['cleos','wallet', 'keys']) 
+        self.getInfoLabel.setText(out)
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
@@ -644,6 +694,7 @@ class Dialog(QtGui.QDialog):
         out = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerPrivateKey])
         out1 = subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.activePrivateKey])
         #self.getInfoLabel.setText(self.wallet.ownerPrivateKey +"\n"+ self.wallet.activePrivateKey + "\n" + out + "\n" + out1)
+         
         
     def createAccountName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
@@ -909,7 +960,8 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText('Switched to test net')
         else:
             self.getInfoLabel.setText("Off test net")
-        
+
+    
         
     
 if __name__ == '__main__':
