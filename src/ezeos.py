@@ -250,6 +250,7 @@ class Dialog(QtGui.QDialog):
         self.blockchain = BlockChain()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         
+        self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
         self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
         self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet")
@@ -365,6 +366,7 @@ class Dialog(QtGui.QDialog):
         self.loadEosioContractButton.clicked.connect(self.loadEosioContract)
         self.createEosioWalletButton.clicked.connect(self.createEosioWallet)
         self.createEosioTokenAccountButton.clicked.connect(self.createEosioTokenAccount)
+        self.stakeBandwidthButton.clicked.connect(self.stakeBandwidth)
         self.native = QtGui.QCheckBox()
         self.native.setText("EZEOS")
         self.native.setChecked(True)
@@ -448,6 +450,7 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.getActionsButton)
         self.tab3.layout.addWidget(self.getBalanceButton)
         self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
+        self.tab3.layout.addWidget(self.stakeBandwidthButton)
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QtGui.QVBoxLayout(self)
@@ -482,6 +485,11 @@ class Dialog(QtGui.QDialog):
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
     #{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
     #"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
+    
+    def stakeBandwidth(self):
+        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
+        self.getInfoLabel.setText(out)
+    
     def testEncryption(self):
         key = ''
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
