@@ -287,7 +287,9 @@ class Dialog(QtGui.QDialog):
         self.accountNameLabel = QtGui.QLabel()
         self.accountNameLabel.setFrameStyle(frameStyle)
         self.contractNameLabel = QtGui.QLabel()
-        self.contractNameLabel.setFrameStyle(frameStyle)    
+        self.contractNameLabel.setFrameStyle(frameStyle)
+        self.creatorNameLabel = QtGui.QLabel()
+        self.creatorNameLabel.setFrameStyle(frameStyle)      
         self.openFileNameButton = QtGui.QPushButton("Load Contract")
         self.loadEosioContractButton = QtGui.QPushButton("Load EosioContract")
         self.issueButton = QtGui.QPushButton("Issue Currency")
@@ -437,7 +439,8 @@ class Dialog(QtGui.QDialog):
         self.tab2.setLayout(self.tab2.layout)
 
         self.tab3.layout = QtGui.QVBoxLayout(self)
-        self.tab3.layout.addWidget(self.accountNameLabel)  
+        self.tab3.layout.addWidget(self.accountNameLabel)
+        self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
         self.tab3.layout.addWidget(self.setCreatorAccountNameButton)
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
@@ -500,7 +503,10 @@ class Dialog(QtGui.QDialog):
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
     #{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
     #"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
-    
+    def setOwnerKey(self):
+        print('Todo')
+        #out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'owner', self.wallet.activePublicKey, '-p', self.account.name, '@', owner])
+        #cleos set account permission account_name owner EOS_public_key_of_new_owner -p account_name@owner
     def stakeBandwidth(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         self.getInfoLabel.setText(out)
@@ -557,8 +563,9 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def update_label(self):
-        self.walletNameLabel.setText('Wallet name: ' + self.wallet.name)
-        self.accountNameLabel.setText('Account name: ' + self.account.name)
+        self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
+        self.accountNameLabel.setText('Account Name: ' + self.account.name)
+        self.creatorNameLabel.setText('Creator Account Name: ' + self.account.name)
         self.contractNameLabel.setText('Contract name: ' + self.order.contract)
         self.toggleLocalNet.setChecked(self.blockchain.running)
         if self.blockchain.running:
