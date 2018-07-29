@@ -199,17 +199,12 @@ class Wallet():
         print('testfunc')
     
     
-        
-        
-        
-        
-   
-
 class Account():
     
     def __init__(self):
         self.name = ""
         self.creator = ""
+        self.owner = ""
         self.receiver = ""
         self.creatorOwnerKey = ""
         self.creatorActiveKey = ""
@@ -272,6 +267,7 @@ class Dialog(QtGui.QDialog):
         self.setActiveKeyButton = QtGui.QPushButton("Create Active Keys")
         self.importKeysButton = QtGui.QPushButton("Import Keys To Wallet")
         self.setAccountNameButton = QtGui.QPushButton("Account Name")
+        self.setAccountOwnerButton = QtGui.QPushButton("Account Owner")
         self.setCreatorAccountNameButton = QtGui.QPushButton("Creator Account Name")
         self.setStakeCPUAmountButton = QtGui.QPushButton("Stake CPU amount")
         self.setStakeBandWidthAmountButton = QtGui.QPushButton("Stake Bandwidth amount")
@@ -345,6 +341,7 @@ class Dialog(QtGui.QDialog):
         self.setActiveKeyButton.clicked.connect(self.setActiveKey)
         self.importKeysButton.clicked.connect(self.importKeys)
         self.setAccountNameButton.clicked.connect(self.createAccountName)
+        self.setAccountOwnerButton.clicked.connect(self.setAccountOwner) 
         self.setCreatorAccountNameButton.clicked.connect(self.createCreatorAccountName)
         self.setStakeCPUAmountButton.clicked.connect(self.setStakeCPUAmount)
         self.setStakeBandWidthAmountButton.clicked.connect(self.setStakeBandWidthAmount)
@@ -443,6 +440,7 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.accountNameLabel)
         self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
+        self.tab3.layout.addWidget(self.setAccountOwnerButton)
         self.tab3.layout.addWidget(self.setCreatorAccountNameButton)
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
         self.tab3.layout.addWidget(self.setStakeBandWidthAmountButton)
@@ -504,10 +502,9 @@ class Dialog(QtGui.QDialog):
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
     #{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
     #"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
-    def setOwnerKey(self):
-        print('Todo')
-        #out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'owner', self.wallet.activePublicKey, '-p', self.account.name, '@', owner])
-        #cleos set account permission account_name owner EOS_public_key_of_new_owner -p account_name@owner
+    def setOwnerPermission(self):
+        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
+        self.getInfoLabel.setText(out)
     def stakeBandwidth(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         self.getInfoLabel.setText(out)
@@ -702,8 +699,15 @@ class Dialog(QtGui.QDialog):
         subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
         self.getInfoLabel.setText('Imported keys to wallet')
         
-         
+    def setAccountOwner(self):
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Account owner:", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            self.account.owner = text
+            self.getInfoLabel.setText(text)
         
+         
     def createAccountName(self):
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "Account name:", QtGui.QLineEdit.Normal,
