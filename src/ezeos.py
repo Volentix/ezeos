@@ -250,6 +250,7 @@ class Dialog(QtGui.QDialog):
         self.blockchain = BlockChain()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         
+        
         self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
         self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
@@ -374,11 +375,11 @@ class Dialog(QtGui.QDialog):
             self.native.hide()
 
         layout = QtGui.QGridLayout()
-        layout.addWidget(self.toggleMainNet, 6, 0)
-        layout.addWidget(self.toggleTestNet, 5, 0)
+        layout.addWidget(self.toggleMainNet, 4, 2)
+        layout.addWidget(self.toggleTestNet, 4, 1)
         layout.addWidget(self.toggleLocalNet, 4, 0)
-        layout.addWidget(self.contractNameLabel, 3, 0)
-        layout.addWidget(self.accountNameLabel, 2, 0)    
+        layout.addWidget(self.contractNameLabel, 1, 2)
+        layout.addWidget(self.accountNameLabel, 1, 1)    
         layout.addWidget(self.walletNameLabel, 1, 0)
         layout.addWidget(self.getInfoLabel,  0, 0, 1, 7)
         
@@ -478,8 +479,20 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
-        self.showFullScreen()
-        #def setMultiSiGAccount(self):    
+        #self.showFullScreen()
+        #self.showMaximized()
+        
+        
+        self.scrollArea = QtGui.QScrollArea()
+        layout.addWidget(self.scrollArea)
+        self.scrollAreaWidgetContents = self.tabs
+        self.scrollArea.setGeometry(QtCore.QRect(3000, 3000, 3000, 3000))
+        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+
         
     #./cleos set account permission testmultisig owner 
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
@@ -857,7 +870,7 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'get', 'account', self.account.name ])
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
-            
+        self.getInfoLabel.setText(out)   
         
     
     def getBalance(self):   
@@ -950,6 +963,14 @@ if __name__ == '__main__':
     
     app = QtGui.QApplication(sys.argv)
     dialog = Dialog()
+    dialog.resize(1152, 1009)
+    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+    sizePolicy.setHorizontalStretch(0)
+    sizePolicy.setVerticalStretch(0)
+    sizePolicy.setHeightForWidth(dialog.sizePolicy().hasHeightForWidth())
+    dialog.setSizePolicy(sizePolicy)
+    dialog.setMouseTracking(False)
+    icon = QtGui.QIcon()        
     
     
     sys.exit(dialog.exec_())
