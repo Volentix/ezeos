@@ -66,6 +66,7 @@
 # Author
 # Sylvain Cormier sylvain@volentixlabs.com/sylvaincormier@protonmail.com
 
+import random
 import subprocess
 import os
 import pexpect
@@ -565,7 +566,7 @@ class Dialog(QtGui.QDialog):
     def update_label(self):
         self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
         self.accountNameLabel.setText('Account Name: ' + self.account.name)
-        self.creatorNameLabel.setText('Creator Account Name: ' + self.account.name)
+        self.creatorNameLabel.setText('Creator Account Name: ' + self.account.creator)
         self.contractNameLabel.setText('Contract name: ' + self.order.contract)
         self.toggleLocalNet.setChecked(self.blockchain.running)
         if self.blockchain.running:
@@ -860,7 +861,6 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
         self.getInfoLabel.setText(out)
     def flushWallets(self):
-        subprocess.check_output(['killall', 'keosd'])
         text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
                 "save wallets to:", QtGui.QLineEdit.Normal,
                 '')
@@ -868,9 +868,10 @@ class Dialog(QtGui.QDialog):
             subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + "/" + text])
             self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + text) 
         elif ok and text == '':
-            subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' ]) 
-            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + '~/eosio-wallet.save' + randint())       
-        
+            rand = random.randint(1,1000000)
+            subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' + str(rand) ]) 
+            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + '~/eosio-wallet.save' + str(rand))       
+        subprocess.check_output(['killall', 'keosd'])
     def getInfo(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'get', 'info'])
         self.getInfoLabel.setText(out)
