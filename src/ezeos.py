@@ -262,7 +262,7 @@ class Dialog(QtGui.QDialog):
         self.restartButton = QtGui.QPushButton("Reset Local Chain")
         self.startButton = QtGui.QPushButton("Start Local Chain")
         self.stopButton = QtGui.QPushButton("Stop Local Chain")
-        self.flushButton = QtGui.QPushButton("Flush Wallets")
+        self.flushButton = QtGui.QPushButton("Rename wallet directory")
         self.createWalletButton = QtGui.QPushButton("Create Wallet")
         self.setOwnerKeyButton = QtGui.QPushButton("Create Owner Keys")
         self.setActiveKeyButton = QtGui.QPushButton("Create Active Keys")
@@ -478,7 +478,7 @@ class Dialog(QtGui.QDialog):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
         self.setWindowTitle("EZEOS")
-        #self.showMaximized()
+        self.showFullScreen()
         #def setMultiSiGAccount(self):    
         
     #./cleos set account permission testmultisig owner 
@@ -649,7 +649,7 @@ class Dialog(QtGui.QDialog):
         self.wallet.locked = False
         cwd = os.getcwd()
         text = ' saved to ' + cwd
-        self.getInfoLabel.setText('private key ' + text)
+        self.getInfoLabel.setText('wallet key ' + text)
         return out 
     
 
@@ -659,15 +659,8 @@ class Dialog(QtGui.QDialog):
         key = key[:-67]
         key2 = out[77:]
         key2 = key2[:-1]
-        f = open( self.wallet.name + "ownerPrivateKeys", 'w' )
-        f.write(key)
-        f.close()
-        f = open( self.wallet.name + "ownerPublicKeys", 'w' )
-        f.write(key2)
-        f.close()
         self.wallet.ownerPrivateKey= key
         self.wallet.ownerPublicKey = key2
-        #self.getInfoLabel.setText(out)
        
 
     def setActiveKey(self):
@@ -676,20 +669,14 @@ class Dialog(QtGui.QDialog):
         key = key[:-67]
         key2 = out[77:]
         key2 = key2[:-1]
-        f = open( self.wallet.name + "ActivePrivateKey", 'w' )
-        f.write(key)
-        f.close()
-        f = open( self.wallet.name + "ActivePublicKey", 'w' )
-        f.write(key2)
-        f.close()
         self.wallet.activePrivateKey = key
         self.wallet.activePublicKey = key2
         #self.getInfoLabel.setText(out)
         
     def importKeys(self):
-        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerPrivateKey])
-        out1 = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.activePrivateKey])
-        #self.getInfoLabel.setText(self.wallet.ownerPrivateKey +"\n"+ self.wallet.activePrivateKey + "\n" + out + "\n" + out1)
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerPrivateKey])
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.activePrivateKey])
+        
          
         
     def createAccountName(self):
@@ -849,16 +836,16 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
         self.getInfoLabel.setText(out)
     def flushWallets(self):
-        subprocess.check_output(['rm', '-rf', os.environ['HOME'] + '/eosio-wallet/'])
-        environ = os.environ['EZEOS_SOURCE'] + '/*'
-        self.getInfoLabel.setText(environ)
-        for CleanUp in glob.glob(environ):
-            if CleanUp.endswith('.py'):    
-                continue
-            else:
-                os.remove(CleanUp)
-        self.getInfoLabel.setText("Deleted Wallets")
-        #self.getInfoLabel.setText("Are you sure you want to do this? How about you go and delete ~/eosio-wallet/ by hand" + "\n" + "This version is used to prototype with accounts on the main net")
+        subprocess.check_output(['killall', 'keosd'])
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "save wallets to:", QtGui.QLineEdit.Normal,
+                '')
+        if ok and text != '':
+            subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + "/" + text])
+            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + text) 
+        elif ok and text == '':
+            subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' ]) 
+            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + '~/eosio-wallet.save')       
         
     def getInfo(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'get', 'info'])
@@ -870,7 +857,7 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'get', 'account', self.account.name ])
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
-        self.getInfoLabel.setText(out)    
+            
         
     
     def getBalance(self):   
