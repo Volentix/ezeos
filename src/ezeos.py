@@ -78,6 +78,7 @@ import glob
 
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
+from random import randint
 sip.setapi('QString', 2)
 import sys
 from PyQt4 import QtCore, QtGui
@@ -250,7 +251,8 @@ class Dialog(QtGui.QDialog):
         self.blockchain = BlockChain()
         frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
         
-        
+        self.label2 = QtGui.QLabel("Test Net")
+        self.label = QtGui.QLabel("Main Net")
         self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
         self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
@@ -375,14 +377,9 @@ class Dialog(QtGui.QDialog):
             self.native.hide()
 
         layout = QtGui.QGridLayout()
-        layout.addWidget(self.toggleMainNet, 4, 2)
-        layout.addWidget(self.toggleTestNet, 4, 1)
-        layout.addWidget(self.toggleLocalNet, 4, 0)
-        layout.addWidget(self.contractNameLabel, 1, 2)
-        layout.addWidget(self.accountNameLabel, 1, 1)    
-        layout.addWidget(self.walletNameLabel, 1, 0)
-        layout.addWidget(self.getInfoLabel,  0, 0, 1, 7)
         
+        layout.addWidget(self.getInfoLabel,  0, 0, 1, 7)
+     
         
         self.tabs = QtGui.QTabWidget()
         self.tab1 = QtGui.QWidget()	
@@ -411,10 +408,12 @@ class Dialog(QtGui.QDialog):
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
-        self.label = QtGui.QLabel("Main Net")
+        self.tab1.layout.addWidget(self.toggleMainNet)
+        self.tab1.layout.addWidget(self.toggleTestNet)
+        self.tab1.layout.addWidget(self.toggleLocalNet)
+        
         self.tab1.layout.addWidget(self.label)
         self.tab1.layout.addWidget(self.producerBox)
-        self.label2 = QtGui.QLabel("Test Net")
         self.tab1.layout.addWidget(self.label2)
         self.tab1.layout.addWidget(self.testProducerBox)
         self.tab1.layout.addWidget(self.getProducerInfoButton)            
@@ -422,6 +421,7 @@ class Dialog(QtGui.QDialog):
  
        
         self.tab2.layout = QtGui.QVBoxLayout(self)
+        self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.createEosioWalletButton)
         self.tab2.layout.addWidget(self.flushButton)
         self.tab2.layout.addWidget(self.setWalletNameButton)
@@ -437,6 +437,7 @@ class Dialog(QtGui.QDialog):
         self.tab2.setLayout(self.tab2.layout)
 
         self.tab3.layout = QtGui.QVBoxLayout(self)
+        self.tab3.layout.addWidget(self.accountNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
         self.tab3.layout.addWidget(self.setCreatorAccountNameButton)
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
@@ -455,6 +456,7 @@ class Dialog(QtGui.QDialog):
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QtGui.QVBoxLayout(self)
+        self.tab4.layout.addWidget(self.contractNameLabel)
         self.tab4.layout.addWidget(self.loadEosioContractButton) 
         self.tab4.layout.addWidget(self.openContractButton)
         self.tab4.layout.addWidget(self.openFileNameButton)
@@ -674,6 +676,7 @@ class Dialog(QtGui.QDialog):
         key2 = key2[:-1]
         self.wallet.ownerPrivateKey= key
         self.wallet.ownerPublicKey = key2
+        self.getInfoLabel.setText('Creating owner keys')
        
 
     def setActiveKey(self):
@@ -684,11 +687,12 @@ class Dialog(QtGui.QDialog):
         key2 = key2[:-1]
         self.wallet.activePrivateKey = key
         self.wallet.activePublicKey = key2
-        #self.getInfoLabel.setText(out)
+        self.getInfoLabel.setText('Creating active keys')
         
     def importKeys(self):
-        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.ownerPrivateKey])
-        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, self.wallet.activePrivateKey])
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey])
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
+        self.getInfoLabel.setText('Imported keys to wallet')
         
          
         
@@ -858,7 +862,7 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + text) 
         elif ok and text == '':
             subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' ]) 
-            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + '~/eosio-wallet.save')       
+            self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + '~/eosio-wallet.save' + randint())       
         
     def getInfo(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'get', 'info'])
