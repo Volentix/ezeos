@@ -79,7 +79,8 @@ import glob
 
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
-from random import randint
+from random import randint, weibullvariate
+from pango import Weight
 sip.setapi('QString', 2)
 import sys
 from PyQt4 import QtCore, QtGui
@@ -249,6 +250,7 @@ class Dialog(QtGui.QDialog):
         
         self.label2 = QtGui.QLabel("Test Net")
         self.label = QtGui.QLabel("Main Net")
+        self.setPermissionObjectButton = QtGui.QPushButton("Set Permisssion Object")
         self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
         self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
@@ -319,6 +321,7 @@ class Dialog(QtGui.QDialog):
         self.toggleTestNet = QtGui.QCheckBox("Test Net")
         self.toggleLocalNet = QtGui.QCheckBox("Local Net")
         self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
+        self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.toggleMainNet.toggled.connect(self.mainNet)
         self.toggleTestNet.toggled.connect(self.testNet)
@@ -477,6 +480,7 @@ class Dialog(QtGui.QDialog):
         
         self.tab6.layout = QtGui.QVBoxLayout(self) 
         #self.tab6.layout.addWidget(self.testFunctionButton)
+        self.tab6.layout.addWidget(self.setPermissionObjectButton)
         self.tab6.layout.addWidget(self.testEncryptionButton)
         self.tab6.setLayout(self.tab6.layout)
         
@@ -502,6 +506,34 @@ class Dialog(QtGui.QDialog):
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
     #{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
     #"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
+    def setPermissionObject(self):
+        threshold = ''
+        weight = ''
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Weight", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            weight = text
+        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Weight", QtGui.QLineEdit.Normal,
+                QtCore.QDir.home().dirName())
+        if ok and text != '':
+            threshold = text
+        permissionObject = self.createPermissionObjectPK(threshold, weight)
+        self.getInfoLabel.setText(permissionObject)
+               
+    def createPermissionObjectPK(self, threshold, weight):
+        token1 = '{"threshold":"'
+        token2 = threshold
+        token3 = '","keys":[{"key":"'
+        token4 = self.wallet.activePublicKey
+        token5 = '","weight":"'
+        token6 = weight
+        token7 = '"}'
+        finalToken = token1 + token2 + token3 + token4 + token5 + token6 + token7
+        print(finalToken)
+        return finalToken
+    
     def setOwnerPermission(self):
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
         self.getInfoLabel.setText(out)
