@@ -70,17 +70,16 @@ import random
 import subprocess
 import os
 import pexpect
-import glob
-
-
-#import json
+#import glob
+import json
+from collections import OrderedDict
 #import time
 #from pprint import pprint
+#from random import randint, weibullvariate
+#from pango import Weight
 
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
-from random import randint, weibullvariate
-from pango import Weight
 sip.setapi('QString', 2)
 import sys
 from PyQt4 import QtCore, QtGui
@@ -250,12 +249,12 @@ class Dialog(QtGui.QDialog):
         
         self.label2 = QtGui.QLabel("Test Net")
         self.label = QtGui.QLabel("Main Net")
-        self.setPermissionObjectButton = QtGui.QPushButton("Set Permisssion Object")
+        self.setPermissionObjectButton = QtGui.QPushButton("Set Permission Object")
         self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
         self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
         self.TestFunctionButton = QtGui.QPushButton("TestFunction")
-        self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet")
-        self.createEosioTokenAccountButton = QtGui.QPushButton("Create eosio.token account")
+        self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet and account")
+        self.createEosioTokenAccountButton = QtGui.QPushButton("Create eosio.token wallet and account")
         self.openContractButton = QtGui.QPushButton("Open Contract")    
         self.setWalletNameButton = QtGui.QPushButton("Wallet Name") 
         self.openWalletNameButton = QtGui.QPushButton("Open Wallet") 
@@ -506,21 +505,94 @@ class Dialog(QtGui.QDialog):
     #'{"threshold":"2","keys":[{"key":"EOS8Re9txzHLCjtS1Hnkfnocgf4pPpQQqn2WXeQjAgLfWdoSR2bSQ","weight":"1"},
     #{"key":"EOS7hFephCDUVDE8mcuBUhY9yEyBJ1VcFMBDktivhWHK9BD1Xd7yx","weight":"1"}],
     #"accounts":[{"permission":"actor":"testmultisig","permission":"owner"},"weight":"2"}]}'
+    #################################################################################
+#     cleos set account permission mymultisig11 active 
+#     '{"threshold":2,"keys":[], "accounts":[{"permission":{"actor":"partner11111","permission":"active"},"weight":1},
+#                                            {"permission":{"actor":"partner22222","permission":"active"},"weight":1},
+#                                            {"permission":{"actor":"partner33333","permission":"active"},"weight":1}],
+#     "waits":[]}' owner -p mymultisig11@owner
+    ################################################################################### 
+#     cleos set account permission mymultisig11 owner 
+#     '{"threshold":2,
+#        "keys":[],
+#        "accounts":[{
+#                      "permission":{"actor":"partner11111", "permission":"owner"},
+#                      "weight":1
+#                    },
+#                                           {"permission":{"actor":"partner22222","permission":"owner"},"weight":1},
+#                                           {"permission":{"actor":"partner33333","permission":"owner"},"weight":1}],
+#     "waits":[]}' 
+#     -p mymultisig11@owner
+    ####################################################################################
+#     cleos multisig propose payme '[{"actor": "partner22222", "permission": "active"},
+#                                    {"actor": "partner33333", "permission": "active"}]' 
+#                                    '[{"actor": "mymultisig11", "permission": "active"}]'
+#     eosio.token transfer '{"from":"mymultisig11", "to":"partner11111", "quantity":"25.0000 SYS", "memo":"Pay partner11111 some money"}'
+#     -p partner11111@active
+    #########################################################################################################################################
+    
+    def createMultiSigAccountObject(self, threshold, weight, actors, permission):
+        multiSigObjects = []
+        for i in actors:
+            multiSigObjects.append(self.createMultiSigObject(weight, i, permission))
+        multiSigAccountObject = {'threshold':threshold, 'keys':[],'accounts':multiSigObjects,"waits":[]}
+        return multiSigAccountObject 
+    
+    def createMultiSigObject(self, weight, actor, permission):
+        lPermission = self.createPermissionObject(actor, permission)
+        
+        multiSigObject = {'permission':lPermission, 'weight':weight}
+        multiSigObject = OrderedDict(sorted(multiSigObject.items(), key=lambda t: t[0], reverse=False))
+        return multiSigObject
+                 
+    def createTestAccounts(self):
+        self.wallet.name = 'partner11111'
+        self.createWallet()
+        self.setOwnerKey()
+        self.setActiveKey()
+        self.importKeys()
+        self.account.name = 'partner11111'
+        self.createAccount()
+        self.wallet.name = 'partner22222'
+        self.createWallet()
+        self.setOwnerKey()
+        self.setActiveKey()
+        self.importKeys()
+        self.account.name = 'partner22222'
+        self.account.owner = 'partner22222'
+        self.createAccount()
+        self.wallet.name = 'partner33333'
+        self.createWallet()
+        self.setOwnerKey()
+        self.setActiveKey()
+        self.importKeys()
+        self.account.name = 'partner33333'
+        self.account.owner = 'partner33333'
+        self.createAccount()
+        self.wallet.name = 'mymultisig11'
+        self.createWallet()
+        self.setOwnerKey()
+        self.setActiveKey()
+        self.importKeys()
+        self.account.name = 'mymultisig11'
+        out = self.createAccount()
+        self.getInfoLabel.setText(out)
+  
+        
+    def createPermissionObject(self, actor, permission):
+        permissionobject = {'actor':actor,'permission':permission}
+        return permissionobject
+        
     def setPermissionObject(self):
-        threshold = ''
-        weight = ''
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Weight", QtGui.QLineEdit.Normal,
-                QtCore.QDir.home().dirName())
-        if ok and text != '':
-            weight = text
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Weight", QtGui.QLineEdit.Normal,
-                QtCore.QDir.home().dirName())
-        if ok and text != '':
-            threshold = text
-        permissionObject = self.createPermissionObjectPK(threshold, weight)
-        self.getInfoLabel.setText(permissionObject)
+        self.createTestAccounts()
+        actors = ['partner11111','partner22222','partner33333']
+        multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2,1, actors,'owner'))
+        self.account.name = 'mymultisig11'
+        #token = '{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"active"},"weight":1},{"permission":{"actor":"partner22222","permission":"active"},"weight":1},{"permission":{"actor":"partner33333","permission":"active"},"weight":1}],"waits":[]}'
+        
+        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name +'@owner',]) 
+        print(out)
+        self.getInfoLabel.setText(out)
                
     def createPermissionObjectPK(self, threshold, weight):
         token1 = '{"threshold":"'
@@ -574,10 +646,12 @@ class Dialog(QtGui.QDialog):
         self.createWallet()
         self.setOwnerKey()
         self.setActiveKey()
-        self.importKeys()
-        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', 'eosio', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
-        self.account.name = 'eosio'   
-        self.getInfoLabel.setText('Eosio Wallet')
+        self.showKeys()
+        #self.importKeys()
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
+        self.account.name = 'eosio'
+        out = self.createAccount()   
+        self.getInfoLabel.setText(out)
 
     def loadEosioContract(self):
         #cleos set contract eosio build/contracts/eosio.bios -p eosio
@@ -585,10 +659,6 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def showKeys(self):
-        #out = 'Owner Public Key: ' + '\n' + str(self.wallet.ownerPublicKey) + '\n'  + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey
-        subprocess.check_output(['/usr/local/eosio/bin/cleos','wallet', 'lock_all']) 
-        self.wallet.locked = True
-        self.lockWallet()
         out = subprocess.check_output(['/usr/local/eosio/bin/cleos','wallet', 'keys']) 
         self.getInfoLabel.setText(out)
     
@@ -619,7 +689,7 @@ class Dialog(QtGui.QDialog):
             text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()", "Wallet Password:", QtGui.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
             if ok and text != '':
-                self.account.creator = text
+               print('')
             child = pexpect.spawn('/usr/local/eosio/bin/cleos', ['wallet', 'unlock', '-n', self.wallet.name])
             child.expect('password:') 
             child.sendline(text)
@@ -674,17 +744,13 @@ class Dialog(QtGui.QDialog):
             self.getInfoLabel.setText(out)
     
     def setWalletPublicKeys(self):
-        ownerPublicKey = self.wallet.name + 'ownerPublicKeys'
-        activePublicKey = self.wallet.name + 'ActivePublicKey'
-        self.wallet.ownerPublicKey = subprocess.check_output(['cat', ownerPublicKey]) 
-        self.wallet.activePublicKey = subprocess.check_output(['cat', activePublicKey]) 
         out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n'  + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
         self.getInfoLabel.setText(out)
     
     def createWallet(self):
-        createAccount = os.environ['HOME'] + '/eosio-wallet'
-        if not os.path.exists(createAccount):
-            os.makedirs(createAccount)
+        walletDir = os.environ['HOME'] + '/eosio-wallet'
+        if not os.path.exists(walletDir):
+            os.makedirs(walletDir)
         if self.blockchain.net == 'test' or self.blockchain.net == 'main':
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos','-u', '"' + str(self.blockchain.producer) + '"' ,'wallet', 'create', '-n', self.wallet.name])
         else:
@@ -702,7 +768,7 @@ class Dialog(QtGui.QDialog):
         cwd = os.getcwd()
         text = ' saved to ' + cwd
         self.getInfoLabel.setText('wallet key ' + text)
-        return out 
+         
     
 
     def setOwnerKey(self):    
@@ -729,6 +795,8 @@ class Dialog(QtGui.QDialog):
     def importKeys(self):
         subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey])
         subprocess.check_output(['/usr/local/eosio/bin/cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
+        self.wallet.ownerPrivateKey = ''
+        self.wallet.activePrivateKey = ''
         self.getInfoLabel.setText('Imported keys to wallet')
         
     def setAccountOwner(self):
