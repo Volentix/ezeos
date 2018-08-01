@@ -586,12 +586,15 @@ class Dialog(QtGui.QDialog):
     def setPermissionObject(self):
         self.createTestAccounts()
         actors = ['partner11111','partner22222','partner33333']
+        multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2,1, actors,'active'))
+        self.account.name = 'mymultisig11'        
+        subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name +'@owner',]) 
+        #cleos set account permission mymultisig11 owner 
+        #'{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"owner"},"weight":1},{"permission":{"actor":"partner22222","permission":"owner"},"weight":1},{"permission":{"actor":"partner33333","permission":"owner"},"weight":1}],"waits":[]}' 
+        #-p mymultisig11@owner
         multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2,1, actors,'owner'))
-        self.account.name = 'mymultisig11'
-        #token = '{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"active"},"weight":1},{"permission":{"actor":"partner22222","permission":"active"},"weight":1},{"permission":{"actor":"partner33333","permission":"active"},"weight":1}],"waits":[]}'
-        
-        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name +'@owner',]) 
-        print(out)
+        self.account.name = 'mymultisig11'        
+        out = subprocess.check_output(['/usr/local/eosio/bin/cleos', 'set', 'account', 'permission', self.account.name, 'owner', multiSigPermissionObject, '-p', self.account.name +'@owner',])
         self.getInfoLabel.setText(out)
                
     def createPermissionObjectPK(self, threshold, weight):
