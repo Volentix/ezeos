@@ -67,6 +67,7 @@
 # Sylvain Cormier sylvain@volentixlabs.com/sylvaincormier@protonmail.com
 
 import random
+from PyQt5.QtWidgets import *
 import subprocess
 import os
 import pexpect
@@ -82,7 +83,7 @@ from collections import OrderedDict
 import sip
 sip.setapi('QString', 2)
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 home = os.environ['HOME'] 
@@ -234,10 +235,10 @@ class Order():
     
     
     
-class Dialog(QtGui.QDialog):
+class Dialog(QtWidgets.QDialog):
     
     def __init__(self, parent=None):
-        super(Dialog, self).__init__(parent)
+        super().__init__(parent)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_label)
         self.timer.start(100)  
@@ -245,70 +246,70 @@ class Dialog(QtGui.QDialog):
         self.order = Order()
         self.account = Account()
         self.blockchain = BlockChain()
-        frameStyle = QtGui.QFrame.Sunken | QtGui.QFrame.StyledPanel
+        frameStyle = QtWidgets.QFrame.Sunken | QtWidgets.QFrame.StyledPanel
         
-        self.label2 = QtGui.QLabel("Test Net")
-        self.label = QtGui.QLabel("Main Net")
-        self.setPermissionObjectButton = QtGui.QPushButton("Set Permission Object")
-        self.stakeBandwidthButton = QtGui.QPushButton("Stake bandwidth")
-        self.testEncryptionButton = QtGui.QPushButton("TestEncryption")
-        self.TestFunctionButton = QtGui.QPushButton("TestFunction")
-        self.createEosioWalletButton = QtGui.QPushButton("Create Eosio Wallet and account")
-        self.createEosioTokenAccountButton = QtGui.QPushButton("Create eosio.token wallet and account")
-        self.openContractButton = QtGui.QPushButton("Open Contract")    
-        self.setWalletNameButton = QtGui.QPushButton("Wallet Name") 
-        self.openWalletNameButton = QtGui.QPushButton("Open Wallet") 
-        self.setWalletPublicKeysButton = QtGui.QPushButton("Set Wallet Public Keys")
-        self.restartButton = QtGui.QPushButton("Reset Local Chain")
-        self.startButton = QtGui.QPushButton("Start Local Chain")
-        self.stopButton = QtGui.QPushButton("Stop Local Chain")
-        self.flushButton = QtGui.QPushButton("Rename wallet directory")
-        self.createWalletButton = QtGui.QPushButton("Create Wallet")
-        self.setOwnerKeyButton = QtGui.QPushButton("Create Owner Keys")
-        self.setActiveKeyButton = QtGui.QPushButton("Create Active Keys")
-        self.importKeysButton = QtGui.QPushButton("Import Keys To Wallet")
-        self.setAccountNameButton = QtGui.QPushButton("Account Name")
-        self.setAccountOwnerButton = QtGui.QPushButton("Account Owner")
-        self.setCreatorAccountNameButton = QtGui.QPushButton("Creator Account Name")
-        self.setStakeCPUAmountButton = QtGui.QPushButton("Stake CPU amount")
-        self.setStakeBandWidthAmountButton = QtGui.QPushButton("Stake Bandwidth amount")
-        self.buyRAMButton = QtGui.QPushButton("Buy RAM")
-        self.setBuyRAMAmountButton = QtGui.QPushButton("Set RAM Amount")
-        self.createAccountButton = QtGui.QPushButton("Create Account")
-        self.setSendAmountButton = QtGui.QPushButton("Set Send Amount")
-        self.setSendRecipientAccountButton = QtGui.QPushButton("Set Recipient Account")
-        self.sendAmountButton = QtGui.QPushButton("Send Funds")        
-        self.getInfoLabel = QtGui.QLabel()
+        self.label2 = QtWidgets.QLabel("Test Net")
+        self.label = QtWidgets.QLabel("Main Net")
+        self.setPermissionObjectButton = QtWidgets.QPushButton("Set Permission Object")
+        self.stakeBandwidthButton = QtWidgets.QPushButton("Stake bandwidth")
+        self.testEncryptionButton = QtWidgets.QPushButton("TestEncryption")
+        self.TestFunctionButton = QtWidgets.QPushButton("TestFunction")
+        self.createEosioWalletButton = QtWidgets.QPushButton("Create Eosio Wallet and account")
+        self.createEosioTokenAccountButton = QtWidgets.QPushButton("Create eosio.token wallet and account")
+        self.openContractButton = QtWidgets.QPushButton("Open Contract")    
+        self.setWalletNameButton = QtWidgets.QPushButton("Wallet Name") 
+        self.openWalletNameButton = QtWidgets.QPushButton("Open Wallet") 
+        self.setWalletPublicKeysButton = QtWidgets.QPushButton("Set Wallet Public Keys")
+        self.restartButton = QtWidgets.QPushButton("Reset Local Chain")
+        self.startButton = QtWidgets.QPushButton("Start Local Chain")
+        self.stopButton = QtWidgets.QPushButton("Stop Local Chain")
+        self.flushButton = QtWidgets.QPushButton("Rename wallet directory")
+        self.createWalletButton = QtWidgets.QPushButton("Create Wallet")
+        self.setOwnerKeyButton = QtWidgets.QPushButton("Create Owner Keys")
+        self.setActiveKeyButton = QtWidgets.QPushButton("Create Active Keys")
+        self.importKeysButton = QtWidgets.QPushButton("Import Keys To Wallet")
+        self.setAccountNameButton = QtWidgets.QPushButton("Account Name")
+        self.setAccountOwnerButton = QtWidgets.QPushButton("Account Owner")
+        self.setCreatorAccountNameButton = QtWidgets.QPushButton("Creator Account Name")
+        self.setStakeCPUAmountButton = QtWidgets.QPushButton("Stake CPU amount")
+        self.setStakeBandWidthAmountButton = QtWidgets.QPushButton("Stake Bandwidth amount")
+        self.buyRAMButton = QtWidgets.QPushButton("Buy RAM")
+        self.setBuyRAMAmountButton = QtWidgets.QPushButton("Set RAM Amount")
+        self.createAccountButton = QtWidgets.QPushButton("Create Account")
+        self.setSendAmountButton = QtWidgets.QPushButton("Set Send Amount")
+        self.setSendRecipientAccountButton = QtWidgets.QPushButton("Set Recipient Account")
+        self.sendAmountButton = QtWidgets.QPushButton("Send Funds")        
+        self.getInfoLabel = QtWidgets.QLabel()
         self.getInfoLabel.setFrameStyle(frameStyle)
-        self.walletNameLabel = QtGui.QLabel()
+        self.walletNameLabel = QtWidgets.QLabel()
         self.walletNameLabel.setFrameStyle(frameStyle)
-        self.accountNameLabel = QtGui.QLabel()
+        self.accountNameLabel = QtWidgets.QLabel()
         self.accountNameLabel.setFrameStyle(frameStyle)
-        self.contractNameLabel = QtGui.QLabel()
+        self.contractNameLabel = QtWidgets.QLabel()
         self.contractNameLabel.setFrameStyle(frameStyle)
-        self.creatorNameLabel = QtGui.QLabel()
+        self.creatorNameLabel = QtWidgets.QLabel()
         self.creatorNameLabel.setFrameStyle(frameStyle)      
-        self.openFileNameButton = QtGui.QPushButton("Load Contract")
-        self.loadEosioContractButton = QtGui.QPushButton("Load EosioContract")
-        self.issueButton = QtGui.QPushButton("Issue Currency")
-        self.recipientNameButton = QtGui.QPushButton("Set Recipient Name")
-        self.amountButton = QtGui.QPushButton("Amount")
-        self.issueToAccountButton = QtGui.QPushButton("Issue To Account")
-        self.transferToAccountButton = QtGui.QPushButton("Transfer To Account")
-        self.chooseCurrencyButton = QtGui.QPushButton("Set Token Name")
-        self.getInfoButton = QtGui.QPushButton("Get Info")        
-        self.getBalanceButton = QtGui.QPushButton("Get Balance")    
-        self.getAccountDetailsButton = QtGui.QPushButton("Get Account Details")
+        self.openFileNameButton = QtWidgets.QPushButton("Load Contract")
+        self.loadEosioContractButton = QtWidgets.QPushButton("Load EosioContract")
+        self.issueButton = QtWidgets.QPushButton("Issue Currency")
+        self.recipientNameButton = QtWidgets.QPushButton("Set Recipient Name")
+        self.amountButton = QtWidgets.QPushButton("Amount")
+        self.issueToAccountButton = QtWidgets.QPushButton("Issue To Account")
+        self.transferToAccountButton = QtWidgets.QPushButton("Transfer To Account")
+        self.chooseCurrencyButton = QtWidgets.QPushButton("Set Token Name")
+        self.getInfoButton = QtWidgets.QPushButton("Get Info")        
+        self.getBalanceButton = QtWidgets.QPushButton("Get Balance")    
+        self.getAccountDetailsButton = QtWidgets.QPushButton("Get Account Details")
        
-        self.listWalletsButton = QtGui.QPushButton("List Wallets")
-        self.getBlockInfoButton = QtGui.QPushButton("Block Info")
-        self.setBlockNumberButton = QtGui.QPushButton("Set Block Number")
-        self.getActionsButton = QtGui.QPushButton("Get Actions")
-        self.showKeysButton = QtGui.QPushButton("Show Keys")
-        self.listProducersButton = QtGui.QPushButton("Get Block Producers")
-        self.getProducerInfoButton = QtGui.QPushButton("Get Block Producer Info")
-        self.producerBox = QtGui.QComboBox()
-        self.testProducerBox = QtGui.QComboBox()
+        self.listWalletsButton = QtWidgets.QPushButton("List Wallets")
+        self.getBlockInfoButton = QtWidgets.QPushButton("Block Info")
+        self.setBlockNumberButton = QtWidgets.QPushButton("Set Block Number")
+        self.getActionsButton = QtWidgets.QPushButton("Get Actions")
+        self.showKeysButton = QtWidgets.QPushButton("Show Keys")
+        self.listProducersButton = QtWidgets.QPushButton("Get Block Producers")
+        self.getProducerInfoButton = QtWidgets.QPushButton("Get Block Producer Info")
+        self.producerBox = QtWidgets.QComboBox()
+        self.testProducerBox = QtWidgets.QComboBox()
         self.producerBox.setObjectName(("Access to Main Net"))
         self.testProducerBox.setObjectName(("Access To Test Net"))
         for i in self.blockchain.producerList:
@@ -316,10 +317,10 @@ class Dialog(QtGui.QDialog):
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
     
-        self.toggleMainNet = QtGui.QCheckBox("Main Net")
-        self.toggleTestNet = QtGui.QCheckBox("Test Net")
-        self.toggleLocalNet = QtGui.QCheckBox("Local Net")
-        self.toggleWalletLock = QtGui.QCheckBox("Lock Wallet")
+        self.toggleMainNet = QtWidgets.QCheckBox("Main Net")
+        self.toggleTestNet = QtWidgets.QCheckBox("Test Net")
+        self.toggleLocalNet = QtWidgets.QCheckBox("Local Net")
+        self.toggleWalletLock = QtWidgets.QCheckBox("Lock Wallet")
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.toggleMainNet.toggled.connect(self.mainNet)
@@ -372,25 +373,25 @@ class Dialog(QtGui.QDialog):
         self.createEosioWalletButton.clicked.connect(self.createEosioWallet)
         self.createEosioTokenAccountButton.clicked.connect(self.createEosioTokenAccount)
         self.stakeBandwidthButton.clicked.connect(self.stakeBandwidth)
-        self.native = QtGui.QCheckBox()
+        self.native = QtWidgets.QCheckBox()
         self.native.setText("EZEOS")
         self.native.setChecked(True)
         if sys.platform not in ("win32", "darwin"):
             self.native.hide()
 
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         
         layout.addWidget(self.getInfoLabel,  0, 0, 1, 7)
      
         
-        self.tabs = QtGui.QTabWidget()
-        self.tab1 = QtGui.QWidget()	
-        self.tab2 = QtGui.QWidget()
-        self.tab3 = QtGui.QWidget()	
-        self.tab4 = QtGui.QWidget()
-        self.tab5 = QtGui.QWidget()
-        self.tab5 = QtGui.QWidget()
-        self.tab6 = QtGui.QWidget()
+        self.tabs = QtWidgets.QTabWidget()
+        self.tab1 = QtWidgets.QWidget()	
+        self.tab2 = QtWidgets.QWidget()
+        self.tab3 = QtWidgets.QWidget()	
+        self.tab4 = QtWidgets.QWidget()
+        self.tab5 = QtWidgets.QWidget()
+        self.tab5 = QtWidgets.QWidget()
+        self.tab6 = QtWidgets.QWidget()
         self.tabs.resize(200,2000) 
  
        
@@ -403,7 +404,7 @@ class Dialog(QtGui.QDialog):
         
  
        
-        self.tab1.layout = QtGui.QVBoxLayout(self)
+        self.tab1.layout = QtWidgets.QVBoxLayout(self)
         self.tab1.layout.addWidget(self.stopButton)
         self.tab1.layout.addWidget(self.restartButton)
         self.tab1.layout.addWidget(self.startButton) 
@@ -422,7 +423,7 @@ class Dialog(QtGui.QDialog):
         self.tab1.setLayout(self.tab1.layout)
  
        
-        self.tab2.layout = QtGui.QVBoxLayout(self)
+        self.tab2.layout = QtWidgets.QVBoxLayout(self)
         self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.createEosioWalletButton)
         self.tab2.layout.addWidget(self.flushButton)
@@ -438,7 +439,7 @@ class Dialog(QtGui.QDialog):
         self.tab2.layout.addWidget(self.toggleWalletLock)
         self.tab2.setLayout(self.tab2.layout)
 
-        self.tab3.layout = QtGui.QVBoxLayout(self)
+        self.tab3.layout = QtWidgets.QVBoxLayout(self)
         self.tab3.layout.addWidget(self.accountNameLabel)
         self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
@@ -459,14 +460,14 @@ class Dialog(QtGui.QDialog):
         self.tab3.layout.addWidget(self.stakeBandwidthButton)
         self.tab3.setLayout(self.tab3.layout) 
         
-        self.tab4.layout = QtGui.QVBoxLayout(self)
+        self.tab4.layout = QtWidgets.QVBoxLayout(self)
         self.tab4.layout.addWidget(self.contractNameLabel)
         self.tab4.layout.addWidget(self.loadEosioContractButton) 
         self.tab4.layout.addWidget(self.openContractButton)
         self.tab4.layout.addWidget(self.openFileNameButton)
         self.tab4.setLayout(self.tab4.layout)
     
-        self.tab5.layout = QtGui.QVBoxLayout(self)
+        self.tab5.layout = QtWidgets.QVBoxLayout(self)
         
         self.tab5.layout.addWidget(self.chooseCurrencyButton)
         self.tab5.layout.addWidget(self.issueButton)
@@ -477,7 +478,7 @@ class Dialog(QtGui.QDialog):
         self.tab5.layout.addWidget(self.transferToAccountButton)
         self.tab5.setLayout(self.tab5.layout)
         
-        self.tab6.layout = QtGui.QVBoxLayout(self) 
+        self.tab6.layout = QtWidgets.QVBoxLayout(self) 
         #self.tab6.layout.addWidget(self.testFunctionButton)
         self.tab6.layout.addWidget(self.setPermissionObjectButton)
         self.tab6.layout.addWidget(self.testEncryptionButton)
@@ -490,7 +491,7 @@ class Dialog(QtGui.QDialog):
         #self.showMaximized()
         
         
-        self.scrollArea = QtGui.QScrollArea()
+        self.scrollArea = QtWidgets.QScrollArea()
         layout.addWidget(self.scrollArea)
         self.scrollAreaWidgetContents = self.tabs
         self.scrollArea.setGeometry(QtCore.QRect(3000, 3000, 3000, 3000))
@@ -618,8 +619,8 @@ class Dialog(QtGui.QDialog):
     
     def testEncryption(self):
         key = ''
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Enter private Key:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Enter private Key:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             key = text
@@ -689,7 +690,7 @@ class Dialog(QtGui.QDialog):
             self.wallet.locked = True
             self.listWallets()
         else:
-            text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()", "Wallet Password:", QtGui.QLineEdit.Normal,
+            text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()", "Wallet Password:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
             if ok and text != '':
                print('')
@@ -732,15 +733,15 @@ class Dialog(QtGui.QDialog):
         self.order.reset()
         
     def setWalletName(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Wallet name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Wallet name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.wallet.name = text
             self.getInfoLabel.setText(text)
     def openWalletName(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Wallet name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Wallet name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos','wallet', 'open', '-n', text])
@@ -803,8 +804,8 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText('Imported keys to wallet')
         
     def setAccountOwner(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Account owner:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Account owner:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.account.owner = text
@@ -812,16 +813,16 @@ class Dialog(QtGui.QDialog):
         
          
     def createAccountName(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Account name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Account name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.account.name = text
             self.getInfoLabel.setText(text)
             
     def createCreatorAccountName(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Creator name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Creator name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.account.creator = text
@@ -838,8 +839,8 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def LoadContract(self):
-        options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
-        directory = QtGui.QFileDialog.getExistingDirectory(self,
+        options = QtWidgets.QFileDialog.DontResolveSymlinks | QtWidgets.QFileDialog.ShowDirsOnly
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self,
                 "Load Contract",
                 self.getInfoLabel.text(), options)
         self.order.contract = directory
@@ -855,8 +856,8 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
         
     def chooseCurrency(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Token name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Token name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.currency = text
@@ -874,56 +875,56 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(out)
     
     def setRecipientName(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Recipient name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Recipient name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.name = text
             self.getInfoLabel.setText(text)
     
     def setRecipientAccount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Recipient name:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Recipient name:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.account.receiver = text
             self.getInfoLabel.setText(text)
     
     def setAmount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Currency Amount:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Currency Amount:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.amount = text 
             self.getInfoLabel.setText(self.order.amount)
     
     def setSendAmount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Currency Amount:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Currency Amount:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.amount = text 
             self.getInfoLabel.setText(self.order.amount)
             
     def setStakeCPUAmount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "CPU Amount:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "CPU Amount:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.stakeCPU = text 
             self.getInfoLabel.setText(self.order.stakeCPU)
             
     def setStakeBandWidthAmount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "BandWith Amount:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "BandWith Amount:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.stakeBandWidth = text 
             self.getInfoLabel.setText(self.order.stakeBandWidth)
             
     def setBuyRAMAmount(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Ram Amount:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Ram Amount:", QtWidgets.QLineEdit.Normal,
                 QtCore.QDir.home().dirName())
         if ok and text != '':
             self.order.buyRam = text 
@@ -968,8 +969,8 @@ class Dialog(QtGui.QDialog):
             out = subprocess.check_output(['/usr/local/eosio/bin/cleos', '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
         self.getInfoLabel.setText(out)
     def flushWallets(self):
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "save wallets to:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "save wallets to:", QtWidgets.QLineEdit.Normal,
                 '')
         if ok and text != '':
             subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + "/" + text])
@@ -1005,8 +1006,8 @@ class Dialog(QtGui.QDialog):
         self.getInfoLabel.setText(str(out))
         
     def setBlockNumber(self):    
-        text, ok = QtGui.QInputDialog.getText(self, "QInputDialog.getText()",
-                "Block number:", QtGui.QLineEdit.Normal,
+        text, ok = QtWidgets.QInputDialog.getText(self, "QInputDialog.getText()",
+                "Block number:", QtWidgets.QLineEdit.Normal,
                 self.blockchain.block.number)
         if ok and text != '':
             self.account.name = text
@@ -1080,10 +1081,10 @@ class Dialog(QtGui.QDialog):
     
 if __name__ == '__main__':
     
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     dialog = Dialog()
     dialog.resize(1152, 1009)
-    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+    sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
     sizePolicy.setHorizontalStretch(0)
     sizePolicy.setVerticalStretch(0)
     sizePolicy.setHeightForWidth(dialog.sizePolicy().hasHeightForWidth())
