@@ -67,21 +67,11 @@
 # Sylvain Cormier sylvain@volentixlabs.com/sylvaincormier@protonmail.com
 
 import random
-from PyQt5.QtWidgets import *
 import subprocess
 import os
 import pexpect
-#import glob
 import json
 from collections import OrderedDict
-#import time
-#from pprint import pprint
-#from random import randint, weibullvariate
-#from pango import Weight
-
-# This is only needed for Python v2 but is harmless for Python v3.
-import sip
-sip.setapi('QString', 2)
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -232,9 +222,7 @@ class Order():
         self.currency = ""
         self.contractAccountName = ""
  
-    
-    
-    
+
 class Dialog(QtWidgets.QDialog):
     
     def __init__(self, parent=None):
