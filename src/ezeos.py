@@ -12,8 +12,8 @@ from subprocess import Popen, PIPE
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
-os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
-os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
+os.environ['EOS_NODEOS'] = "/usr/local/eosio/bin/nodeos"
+os.environ['EOS_KEOSD'] = "/usr/local/eosio/bin/keosd"
 os.environ['CLEOS'] = "/usr/local/eosio/bin/cleos"
 
 class BlockChain():
@@ -248,6 +248,8 @@ class GUI(QProcess):
         self.listProducersButton = QPushButton("Get Block Producers")
         self.getProducerInfoButton = QPushButton("Get Block Producer Info")
         self.setCleosPathButton =  QPushButton("Set Cleos Path -default:/usr/local/eosio/bin/cleos)")
+        self.setNodeosPathButton =  QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos/)")
+        self.setKeosdPathButton =  QPushButton("Set Keosd Path -default:/usr/local/eosio/bin/keosd)")
         self.producerBox = QComboBox()
         self.testProducerBox = QComboBox()
         self.producerBox.setObjectName(("Access to Main Net"))
@@ -260,7 +262,9 @@ class GUI(QProcess):
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
-        self.setCleosPathButton.clicked.connect(self.dialog.setCleosPath)
+        self.setCleosPathButton.clicked.connect(self.dialog.setKeosdPath)
+        self.setKeosdPathButton.clicked.connect(self.dialog.setKeosdPath)
+        self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.toggleMainNet.toggled.connect(self.mainNet)
@@ -350,6 +354,8 @@ class GUI(QProcess):
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
         self.tab1.layout.addWidget(self.setCleosPathButton)
+        self.tab1.layout.addWidget(self.setKeosdPathButton)
+        self.tab1.layout.addWidget(self.setNodeosPathButton)
         self.tab1.layout.addWidget(self.toggleMainNet)
         self.tab1.layout.addWidget(self.toggleTestNet)
         self.tab1.layout.addWidget(self.toggleLocalNet)
@@ -456,7 +462,7 @@ class GUI(QProcess):
     
 
     def startNodeos(self):
-        self.start("/usr/local/eosio/bin/nodeos", ['--delete-all-blocks'])
+        self.start(os.environ['EOS_NODEOS'], ['--delete-all-blocks'])
 
     
     def readStdOutput(self):
@@ -580,7 +586,8 @@ class GUI(QProcess):
         
     def stopChain(self):    
         try:
-            subprocess.check_output(['killall', '/usr/local/eosio/bin/nodeos'])
+            subprocess.check_output(['killall', os.environ['EOS_NODEOS']])
+            subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
             self.getInfoLabel.setText('Chain stopped')
             self.blockchain.running = False
         except:
@@ -598,10 +605,11 @@ class GUI(QProcess):
     def resetChain(self):
         out = ''
         try:
-            out = subprocess.check_output(['rm', '-rf', os.environ['EOS_NODEOS'] + 'data'])          
+            out = subprocess.check_output(['rm', '-rf', os.environ['EOS_NODEOS'] + 'data']) 
+                     
         except:
             print('Already reset')
-        print(os.environ['EOS_NODEOS'] + 'data')
+        #subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
         self.blockchain.running = False   
         self.getInfoLabel.setText('Chain reset' + str(out))
         self.account.reset()
@@ -617,7 +625,7 @@ class GUI(QProcess):
             self.getInfoLabel.setText(str(out))
     
     def setWalletPublicKeys(self):
-        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
+        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + str(self.account.creatorActiveKey) 
         self.getInfoLabel.setText(str(out))
     
     def createWallet(self):
@@ -741,7 +749,7 @@ class GUI(QProcess):
         rand = random.randint(1, 1000000)
         subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' + str(rand) ]) 
         self.getInfoLabel.setText("Moved Wallets" + os.environ['HOME'] + "/" + '~/eosio-wallet.save' + str(rand))       
-        subprocess.check_output(['killall', 'keosd'])
+        subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
 
     def getInfo(self):
         out = subprocess.check_output([os.environ['CLEOS'], 'get', 'info'])
@@ -940,6 +948,15 @@ class Dialog(QDialog):
        if ok and text != '':
            os.environ['CLEOS'] = text
     
+    def setNodeosPath(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       if ok and text != '':
+           os.environ['EOS_NODEOS'] = text
+    
+    def setKeosdPath(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       if ok and text != '':
+           os.environ['EOS_KEOSD'] = text
     
         
 def main():
