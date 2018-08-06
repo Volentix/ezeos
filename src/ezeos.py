@@ -5,10 +5,8 @@ import PyQt5.QtCore as QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import *  # QScrollArea, QVBoxLayout, QGridLayout, QTabWidget, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QTextEdit, QLabel, QLineEdit, QFrame, QComboBox, QCheckBox, QInputDialog, QLineEdit
+from PyQt5.QtWidgets import *  
 from subprocess import Popen, PIPE
-
-
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
@@ -262,7 +260,7 @@ class GUI(QProcess):
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
-        self.setCleosPathButton.clicked.connect(self.dialog.setKeosdPath)
+        self.setCleosPathButton.clicked.connect(self.dialog.setCleosPath)
         self.setKeosdPathButton.clicked.connect(self.dialog.setKeosdPath)
         self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
@@ -565,7 +563,7 @@ class GUI(QProcess):
             self.toggleTestNet.setChecked(False)
         self.blockchain.producer = self.producerBox.currentText()
         self.blockchain.testProducer = self.testProducerBox.currentText()
-       
+      
     def getActions(self):
         out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])   
         self.getInfoLabel.setText(str(out))
@@ -938,23 +936,23 @@ class Dialog(QDialog):
        self.parent.getInfoLabel.setText(directory)
    
     def chooseCurrency(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, '')
        if ok and text != '':
            self.parent.order.currency = text
            self.parent.getInfoLabel.setText(text)
     
     def setCleosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Cleos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Cleos Path:", QLineEdit.Normal, '')
        if ok and text != '':
            os.environ['CLEOS'] = text
     
     def setNodeosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, '')
        if ok and text != '':
            os.environ['EOS_NODEOS'] = text
     
     def setKeosdPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, '')
        if ok and text != '':
            os.environ['EOS_KEOSD'] = text
     
