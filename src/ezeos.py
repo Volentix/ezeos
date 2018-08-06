@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
+os.environ['NODEOS_DATA'] = home + "/.local/share/eosio/nodeos/data/"
 os.environ['EOS_NODEOS'] = "/usr/local/eosio/bin/nodeos"
 os.environ['EOS_KEOSD'] = "/usr/local/eosio/bin/keosd"
 os.environ['CLEOS'] = "/usr/local/eosio/bin/cleos"
@@ -248,6 +249,7 @@ class GUI(QProcess):
         self.setCleosPathButton =  QPushButton("Set Cleos Path -default:/usr/local/eosio/bin/cleos)")
         self.setNodeosPathButton =  QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos/)")
         self.setKeosdPathButton =  QPushButton("Set Keosd Path -default:/usr/local/eosio/bin/keosd)")
+        self.setNodeosDataPathButton =  QPushButton("Set Nodeos data Path -default:~/.local/share/eosio/nodeos/data)")
         self.producerBox = QComboBox()
         self.testProducerBox = QComboBox()
         self.producerBox.setObjectName(("Access to Main Net"))
@@ -262,6 +264,7 @@ class GUI(QProcess):
             self.testProducerBox.addItem(i)
         self.setCleosPathButton.clicked.connect(self.dialog.setCleosPath)
         self.setKeosdPathButton.clicked.connect(self.dialog.setKeosdPath)
+        self.setNodeosDataPathButton.clicked.connect(self.dialog.setNodeosDataPath)
         self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
@@ -353,6 +356,7 @@ class GUI(QProcess):
         self.tab1.layout.addWidget(self.listProducersButton)
         self.tab1.layout.addWidget(self.setCleosPathButton)
         self.tab1.layout.addWidget(self.setKeosdPathButton)
+        self.tab1.layout.addWidget(self.setNodeosDataPathButton)
         self.tab1.layout.addWidget(self.setNodeosPathButton)
         self.tab1.layout.addWidget(self.toggleMainNet)
         self.tab1.layout.addWidget(self.toggleTestNet)
@@ -431,7 +435,7 @@ class GUI(QProcess):
             
         self.edit = QTextEdit()
         self.edit.setStyleSheet("background-color:black;color: rgb(110, 110, 110);")
-
+        
         
         self.edit.setWindowTitle("EZEOS")
 
@@ -460,7 +464,7 @@ class GUI(QProcess):
     
 
     def startNodeos(self):
-        self.start(os.environ['EOS_NODEOS'], ['--delete-all-blocks'])
+        self.start('/bin/bash', ['-c', os.environ['EOS_NODEOS'], '--delete-all-blocks'])
 
     
     def readStdOutput(self):
@@ -603,11 +607,9 @@ class GUI(QProcess):
     def resetChain(self):
         out = ''
         try:
-            out = subprocess.check_output(['rm', '-rf', os.environ['EOS_NODEOS'] + 'data']) 
-                     
+            out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']]) 
         except:
             print('Already reset')
-        #subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
         self.blockchain.running = False   
         self.getInfoLabel.setText('Chain reset' + str(out))
         self.account.reset()
@@ -955,6 +957,12 @@ class Dialog(QDialog):
        text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, '')
        if ok and text != '':
            os.environ['EOS_KEOSD'] = text
+           
+    def setNodeosDataPath(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos data Path:", QLineEdit.Normal, '')
+       if ok and text != '':
+           os.environ['NODEOS_DATA'] = text       
+           
     
         
 def main():
