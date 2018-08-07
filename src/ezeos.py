@@ -239,7 +239,7 @@ class GUI(QProcess):
         self.amountButton = QPushButton("Amount")
         self.issueToAccountButton = QPushButton("Issue To Account")
         self.transferToAccountButton = QPushButton("Transfer To Account")
-        self.chooseCurrencyButton = QPushButton("Set Token Name")
+        self.chooseCurrencyButton = QPushButton("Set Currency Name")
         self.getInfoButton = QPushButton("Get Info")        
         self.getBalanceButton = QPushButton("Get Balance")    
         self.getAccountDetailsButton = QPushButton("Get Account Details")
@@ -375,7 +375,6 @@ class GUI(QProcess):
         self.tab1.setLayout(self.tab1.layout)
        
         self.tab2.layout = QVBoxLayout()
-        self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.toggleWalletLock) 
         self.tab2.layout.addWidget(self.setWalletNameButton)
         self.tab2.layout.addWidget(self.flushButton)
@@ -388,19 +387,19 @@ class GUI(QProcess):
         self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
         self.tab2.layout.addWidget(self.showKeysButton)
         self.tab2.layout.addWidget(self.createEosioWalletButton)
-
         self.tab2.setLayout(self.tab2.layout)
+
         self.tab3.layout = QVBoxLayout()
-        self.tab3.layout.addWidget(self.accountNameLabel)
-        self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
+        self.tab3.layout.addWidget(self.createAccountButton)
+        self.tab3.layout.addWidget(self.chooseCurrencyButton)
         self.tab3.layout.addWidget(self.setAccountOwnerButton)
         self.tab3.layout.addWidget(self.setCreatorAccountNameButton)
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
         self.tab3.layout.addWidget(self.setStakeBandWidthAmountButton)
         self.tab3.layout.addWidget(self.setBuyRAMAmountButton)
         self.tab3.layout.addWidget(self.buyRAMButton)
-        self.tab3.layout.addWidget(self.createAccountButton)
+
         self.tab3.layout.addWidget(self.setSendAmountButton)
         self.tab3.layout.addWidget(self.setSendRecipientAccountButton)
         self.tab3.layout.addWidget(self.sendAmountButton)
@@ -693,8 +692,11 @@ class GUI(QProcess):
         if self.wallet.activePrivateKey == '':
             self.getInfoLabel.setText('Create keys first')
             return
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey])
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
+        try:
+            subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey])
+            subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
+        except:
+            print('Could not creta keys')
         self.wallet.ownerPrivateKey = ''
         self.wallet.activePrivateKey = ''
         self.getInfoLabel.setText('Imported keys to wallet')
@@ -702,11 +704,17 @@ class GUI(QProcess):
     def createAccount(self):
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
+            try:
+                out = subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
+                self.getInfoLabel.setText(str(out))
+            except:
+                print('Could not create account')
+                self.getInfoLabel.setText('Could not create account')
+
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
             permission = self.account.creator + '@active'
             out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
-        self.getInfoLabel.setText(str(out))
+            self.getInfoLabel.setText(str(out))
     
     
         
@@ -801,7 +809,10 @@ class GUI(QProcess):
     def getBalance(self):   
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
+            try:
+                out = subprocess.check_output([os.environ['CLEOS'], 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
+            except:
+                print('')
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])       
         self.getInfoLabel.setText(str(out))    
