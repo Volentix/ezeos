@@ -598,9 +598,13 @@ class GUI(QProcess):
             self.listWallets()
         else:
             word = self.dialog.getWord()
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
-            word = ''
+            try:
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
+                word = ''
+            except:
+                print('Cannot unlock wallet')
             self.wallet.locked = False
+            self.listWallets()
 
     def stopChain(self):
         try:
@@ -631,12 +635,11 @@ class GUI(QProcess):
             out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']])
 
         except:
-            print('')
-        self.blockchain.running = False   
-        #self.getInfoLabel.setText('Chain reset' + str(out))
-        #self.account.reset()
-        #self.wallet.reset()
-        #self.order.reset()
+            self.blockchain.running = False
+            self.getInfoLabel.setText('Chain reset' + str(out))
+            self.account.reset()
+            self.wallet.reset()
+            self.order.reset()
     
 
     
@@ -650,6 +653,7 @@ class GUI(QProcess):
 
     
     def createWallet(self):
+        out = ''
         try:
             walletDir = os.environ['HOME'] + '/eosio-wallet'
             if not os.path.exists(walletDir):
@@ -658,7 +662,8 @@ class GUI(QProcess):
             self.getInfoLabel.setText(str(out))
         except:
             print('Cannot create Wallet')
-            self.getInfoLabel.setText('Cannot create Wallet')
+            text = 'Cannot create Wallet' + str(out)
+            self.getInfoLabel.setText(text)
 
 
     def setOwnerKey(self):    
@@ -996,14 +1001,16 @@ class Dialog(QDialog):
     def openWalletName(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Wallet namme:", QLineEdit.Normal, '')
         if ok and text != '':
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
-            self.parent,getInfoLabel.setText(str(out))
+            try:
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
+                self.parent.getInfoLabel.setText(str(out))
+            except:
+                self.parent.getInfoLabel.setText('Could not open wallet')
         
 def main():
    
     app = QApplication(sys.argv)
     app.setStyleSheet("QPushButton { background: grey }")
-  
     qProcess = GUI()
     qProcess.setProcessChannelMode(QProcess.MergedChannels)
     qProcess.readyReadStandardOutput.connect(qProcess.readStdOutput)
