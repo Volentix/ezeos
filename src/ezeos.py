@@ -7,10 +7,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import *  
 from subprocess import Popen, PIPE
+import platform
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
-os.environ['NODEOS_DATA'] = home + "/.local/share/eosio/nodeos/data/"
+if platform.system() == 'Darwin':
+	os.environ['NODEOS_DATA'] = home + "/Library/Application\ Support/eosio/nodeos/data"
+elif platform.system() == 'Linux':	
+	os.environ['NODEOS_DATA'] = home + "/.local/share/eosio/nodeos/data/"
 os.environ['EOS_NODEOS'] = "/usr/local/eosio/bin/nodeos"
 os.environ['EOS_KEOSD'] = "/usr/local/eosio/bin/keosd"
 os.environ['CLEOS'] = "/usr/local/eosio/bin/cleos"
@@ -464,9 +468,9 @@ class GUI(QProcess):
     
 
     def startNodeos(self):
-        self.start('/bin/bash', ['-c', os.environ['EOS_NODEOS'], '--delete-all-blocks'])
+        self.start(os.environ['EOS_NODEOS'],['--delete-all-blocks'])
 
-    
+
     def readStdOutput(self):
         output = bytearray(self.readAllStandardOutput())
         output = output.decode("ascii")
@@ -475,21 +479,21 @@ class GUI(QProcess):
     def createPermissionObject(self, actor, permission):
         permissionobject = {'actor':actor, 'permission':permission}
         return permissionobject
-        
+
     def setPermissionObject(self):
         self.createTestAccounts()
         actors = ['partner11111', 'partner22222', 'partner33333']
         multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2, 1, actors, 'active'))
-        self.account.name = 'mymultisig11'        
-        subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name + '@owner', ]) 
-        # cleos set account permission mymultisig11 owner 
-        # '{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"owner"},"weight":1},{"permission":{"actor":"partner22222","permission":"owner"},"weight":1},{"permission":{"actor":"partner33333","permission":"owner"},"weight":1}],"waits":[]}' 
+        self.account.name = 'mymultisig11'
+        subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name + '@owner', ])
+        # cleos set account permission mymultisig11 owner
+        # '{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"owner"},"weight":1},{"permission":{"actor":"partner22222","permission":"owner"},"weight":1},{"permission":{"actor":"partner33333","permission":"owner"},"weight":1}],"waits":[]}'
         # -p mymultisig11@owner
         multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2, 1, actors, 'owner'))
-        self.account.name = 'mymultisig11'        
+        self.account.name = 'mymultisig11'
         out = subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, 'owner', multiSigPermissionObject, '-p', self.account.name + '@owner', ])
         self.getInfoLabel.setText(str(out))
-               
+
     def createPermissionObjectPK(self, threshold, weight):
         token1 = '{"threshold":"'
         token2 = threshold
@@ -501,7 +505,7 @@ class GUI(QProcess):
         finalToken = token1 + token2 + token3 + token4 + token5 + token6 + token7
         print(finalToken)
         return finalToken
-    
+
     def setOwnerPermission(self):
         out = subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
         self.getInfoLabel.setText(str(out))
@@ -509,7 +513,7 @@ class GUI(QProcess):
     def stakeBandwidth(self):
         out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         self.getInfoLabel.setText(str(out))
-    
+
     def testEncryption(self):
         key = ''
         text, ok = QInputDialog.getText(self, "QInputDialog.getText()",
@@ -518,44 +522,44 @@ class GUI(QProcess):
         if ok and text != '':
             key = text
         child = pexpect.spawn(['seccure-key'])
-        child.expect('Enter private key:') 
+        child.expect('Enter private key:')
         child.sendline(key)
         child.expect(pexpect.EOF)
         out = child.before
         self.getInfoLabel.setText(str(out))
         child.close()
-    
+
     def createEosioTokenAccount(self):
         self.wallet.name = 'eosio.token'
         self.createWallet()
         self.setOwnerKey()
         self.setActiveKey()
         self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])   
+        subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])
         # cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
-    
+
     def createEosioWallet(self):
-       
+
         self.wallet.name = 'eosio'
         self.createWallet()
         self.setOwnerKey()
         self.setActiveKey()
         self.showKeys()
         # self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
+        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])
         self.account.name = 'eosio'
-        out = self.createAccount()   
+        out = self.createAccount()
         self.getInfoLabel.setText(str(out))
 
     def loadEosioContract(self):
         # cleos set contract eosio build/contracts/eosio.bios -p eosio
-        out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])   
+        out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])
         self.getInfoLabel.setText(str(out))
-    
+
     def showKeys(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'keys']) 
+        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'keys'])
         self.getInfoLabel.setText(str(out))
-    
+
     def update_label(self):
         self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
         self.accountNameLabel.setText('Account Name: ' + self.account.name)
@@ -567,11 +571,11 @@ class GUI(QProcess):
             self.toggleTestNet.setChecked(False)
         self.blockchain.producer = self.producerBox.currentText()
         self.blockchain.testProducer = self.testProducerBox.currentText()
-      
+
     def getActions(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])   
+        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])
         self.getInfoLabel.setText(str(out))
-    
+
     def lockWallet(self):
         if self.wallet.name == '':
             self.getInfoLabel.setText('Please set wallet name:')
@@ -585,16 +589,19 @@ class GUI(QProcess):
             out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
             word = ''
             self.wallet.locked = False
-        
-    def stopChain(self):    
+
+    def stopChain(self):
         try:
-            subprocess.check_output(['killall', os.environ['EOS_NODEOS']])
-            subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
-            self.getInfoLabel.setText('Chain stopped')
-            self.blockchain.running = False
+            self.terminate()
+            print(os.environ['EOS_NODEOS'])
+            out = subprocess.check_output(['pkill', '-9', os.environ['EOS_NODEOS']])
         except:
-            self.getInfoLabel.setText('No chain running')
-            self.blockchain.running = False
+            print('Already terminated')
+        #self.getInfoLabel.setText(out)
+        #self.blockchain.running = False
+        #except:
+        #    self.getInfoLabel.setText('No chain running')
+        #    self.blockchain.running = False
      
     def startChain(self):
         
