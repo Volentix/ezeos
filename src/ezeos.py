@@ -8,6 +8,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import *  
 from subprocess import Popen, PIPE
 import platform
+import re
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
@@ -288,7 +289,7 @@ class GUI(QProcess):
         self.startButton.clicked.connect(self.startChain)
         self.restartButton.clicked.connect(self.resetChain)    
         self.setWalletNameButton.clicked.connect(self.dialog.setWalletName)
-        self.openWalletNameButton.clicked.connect(self.openWalletName)
+        self.openWalletNameButton.clicked.connect(self.dialog.openWalletName)
         self.createWalletButton.clicked.connect(self.createWallet)
         self.setOwnerKeyButton.clicked.connect(self.setOwnerKey)
         self.setActiveKeyButton.clicked.connect(self.setActiveKey)
@@ -530,26 +531,37 @@ class GUI(QProcess):
         child.close()
 
     def createEosioTokenAccount(self):
-        self.wallet.name = 'eosio.token'
-        self.createWallet()
-        self.setOwnerKey()
-        self.setActiveKey()
-        self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])
-        # cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+        out = ''
+        try:
+            self.wallet.name = 'eosio.token'
+            self.createWallet()
+            self.setOwnerKey()
+            self.setActiveKey()
+            self.importKeys()
+            out = subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])
+            self.getInfoLabel.setText(str(out))
+        except:
+            print('Could not creat eosio account')
+            # cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+            self.getInfoLabel.setText(str(out))
 
     def createEosioWallet(self):
+        out = ''
+        try:
+            self.wallet.name = 'eosio'
+            self.createWallet()
+            self.setOwnerKey()
+            self.setActiveKey()
+            self.showKeys()
+            # self.importKeys()
+            subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])
+            self.account.name = 'eosio'
+            out = self.createAccount()
+            self.getInfoLabel.setText(str(out))
+        except:
+            out = 'could not create wallet'
+            self.getInfoLabel.setText(str(out))
 
-        self.wallet.name = 'eosio'
-        self.createWallet()
-        self.setOwnerKey()
-        self.setActiveKey()
-        self.showKeys()
-        # self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])
-        self.account.name = 'eosio'
-        out = self.createAccount()
-        self.getInfoLabel.setText(str(out))
 
     def loadEosioContract(self):
         # cleos set contract eosio build/contracts/eosio.bios -p eosio
@@ -593,16 +605,10 @@ class GUI(QProcess):
     def stopChain(self):
         try:
             self.terminate()
-            print(os.environ['EOS_NODEOS'])
             out = subprocess.check_output(['pkill', '-9', os.environ['EOS_NODEOS']])
         except:
             print('Already terminated')
-        #self.getInfoLabel.setText(out)
-        #self.blockchain.running = False
-        #except:
-        #    self.getInfoLabel.setText('No chain running')
-        #    self.blockchain.running = False
-     
+
     def startChain(self):
         
         self.startNodeos()
@@ -613,34 +619,47 @@ class GUI(QProcess):
           
     def resetChain(self):
         out = ''
+
+
         try:
-            out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']]) 
+            out = subprocess.check_output(['lsof', '-t', '-i:8900'])
+            out = '$(' + str(out) + ')'
+            out =re.sub('[^A-Za-z0-9]+', '', out)
+            out = re.sub('[n]+', '', out)
+            out = re.sub('[b]+', '', out)
+            subprocess.check_output(['kill', out])
+            out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']])
+
         except:
-            print('Already reset')
+            print('')
         self.blockchain.running = False   
-        self.getInfoLabel.setText('Chain reset' + str(out))
-        self.account.reset()
-        self.wallet.reset()
-        self.order.reset()
+        #self.getInfoLabel.setText('Chain reset' + str(out))
+        #self.account.reset()
+        #self.wallet.reset()
+        #self.order.reset()
     
-    def openWalletName(self):
-        text, ok = QInputDialog.getText(self, "QInputDialog.getText()",
-                "Wallet name:", QLineEdit.Normal,
-                QtCore.QDir.home().dirName())
-        if ok and text != '':
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
-            self.getInfoLabel.setText(str(out))
+
     
     def setWalletPublicKeys(self):
-        out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + str(self.account.creatorActiveKey) 
-        self.getInfoLabel.setText(str(out))
+        try:
+            out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + str(self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + str(self.account.creatorActiveKey)
+            self.getInfoLabel.setText(str(out))
+        except:
+            print('could not copy keys')
+            self.getInfoLabel.setText('could not copy keys')
+
     
     def createWallet(self):
-        walletDir = os.environ['HOME'] + '/eosio-wallet'    
-        if not os.path.exists(walletDir):
-            os.makedirs(walletDir)
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
-        self.getInfoLabel.setText(str(out))
+        try:
+            walletDir = os.environ['HOME'] + '/eosio-wallet'
+            if not os.path.exists(walletDir):
+                os.makedirs(walletDir)
+            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
+            self.getInfoLabel.setText(str(out))
+        except:
+            print('Cannot create Wallet')
+            self.getInfoLabel.setText('Cannot create Wallet')
+
 
     def setOwnerKey(self):    
         out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
@@ -754,9 +773,13 @@ class GUI(QProcess):
 #             self.getInfoLabel.setText("Moved Wallets"+ os.environ['HOME'] + "/" + text) 
 #         elif ok and text == '':
         rand = random.randint(1, 1000000)
-        subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' + str(rand) ]) 
-        self.getInfoLabel.setText("Moved Wallets" + os.environ['HOME'] + "/" + '~/eosio-wallet.save' + str(rand))       
-        subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
+        try:
+
+            subprocess.check_output(['mv', os.environ['HOME'] + '/eosio-wallet/', os.environ['HOME'] + '/eosio-wallet.save' + str(rand) ])
+            self.getInfoLabel.setText("Moved Wallets" + os.environ['HOME'] + "/" + '~/eosio-wallet.save' + str(rand))
+            subprocess.check_output(['killall', os.environ['EOS_KEOSD']])
+        except:
+            print('Could not move')
 
     def getInfo(self):
         out = subprocess.check_output([os.environ['CLEOS'], 'get', 'info'])
@@ -970,7 +993,11 @@ class Dialog(QDialog):
        if ok and text != '':
            os.environ['NODEOS_DATA'] = text       
            
-    
+    def openWalletName(self):
+        text, ok = QInputDialog.getText(self, "EZEOS", "Wallet namme:", QLineEdit.Normal, '')
+        if ok and text != '':
+            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
+            self.parent,getInfoLabel.setText(str(out))
         
 def main():
    
