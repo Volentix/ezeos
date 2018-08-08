@@ -12,8 +12,10 @@ import re
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
+
+
 if platform.system() == 'Darwin':
-	os.environ['NODEOS_DATA'] = home + "/Library/Application\ Support/eosio/nodeos/data"
+	    os.environ['NODEOS_DATA'] = home + "/Library/Application\ Support/eosio/nodeos/data"
 elif platform.system() == 'Linux':	
 	os.environ['NODEOS_DATA'] = home + "/.local/share/eosio/nodeos/data/"
 os.environ['EOS_NODEOS'] = "/usr/local/eosio/bin/nodeos"
@@ -31,6 +33,7 @@ class BlockChain():
         
         self.net = ['main', 'test', 'local']
         self.block = self.Block()
+        self.isContainer = False
         self.running = False
         self.producer = ""
         self.testProducer = ""
@@ -67,6 +70,7 @@ class BlockChain():
                                     'https://eu1.eosdac.io:443',
                                 ]
         self.testProducerList = [
+                                     'http://127.0.0.1:8888',
                                      'eosgreen.uk.to:9875',
                                      'ctestnet.edenx.io:62071',
                                      '54.194.49.21:9875',
@@ -468,7 +472,13 @@ class GUI(QProcess):
     
 
     def startNodeos(self):
-        self.start(os.environ['EOS_NODEOS'],['--delete-all-blocks'])
+        if self.blockchain.isContainer:
+            command = "nodeos"
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
+            output = process.communicate()
+            print(output[0].decode())
+        else:
+            self.start(os.environ['EOS_NODEOS'],['--delete-all-blocks'])
 
 
     def readStdOutput(self):
@@ -720,10 +730,14 @@ class GUI(QProcess):
         
     def setContractSteps(self):
         out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name ])
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
+        try:
+            if self.blockchain.net == 'local':
+                out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name ])
+            elif self.blockchain.net == 'test' or self.blockchain.net == 'main':
+                out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
+
+        except:
+            out = 'Cannot set contract steps'
         self.getInfoLabel.setText(str(out))
         
    
@@ -800,11 +814,14 @@ class GUI(QProcess):
         
     def getAccountDetails(self):    
         out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'get', 'account', self.account.name ])
-        elif self.blockchain.net == 'main' :
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
-        self.getInfoLabel.setText(str(out))   
+        try:
+            if self.blockchain.net == 'local':
+                out = subprocess.check_output([os.environ['CLEOS'], 'get', 'account', self.account.name ])
+            elif self.blockchain.net == 'main' :
+                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
+            self.getInfoLabel.setText(str(out))
+        except:
+            out = 'Could not get details'
     
     def getBalance(self):   
         out = ''
@@ -818,11 +835,27 @@ class GUI(QProcess):
         self.getInfoLabel.setText(str(out))    
     
     def listWallets(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
+        out = ''
+        try:
+            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
+        except:
+            print('Cannot list wallets')
         self.getInfoLabel.setText(str(out))
         
-    def getBlockInfo(self):    
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'block', self.blockchain.block.number])
+    def getBlockInfo(self):
+        out = ''
+        try:
+            if self.blockchain.net == 'test':
+                producerConv = 'https://' + self.blockchain.testProducer
+                print(producerConv)
+                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number ])
+            elif self.blockchain.net == 'local' :
+                out = subprocess.check_output([os.environ['CLEOS'], 'get', 'block', self.blockchain.block.number])
+            elif self.blockchain.net == 'main':
+                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number])
+
+        except:
+            out = 'no'
         self.getInfoLabel.setText(str(out))
         
     def listProducers(self):
@@ -944,8 +977,8 @@ class Dialog(QDialog):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Amount:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.amount = text 
-            self.parent.getInfoLabel.setText(self.order.amount)
-    
+            self.parent.getInfoLabel.setText(self.parent.order.amount)
+
     def setSendAmount(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Send Amount:", QLineEdit.Normal, "")
         if ok and text != '':
@@ -995,10 +1028,20 @@ class Dialog(QDialog):
            os.environ['CLEOS'] = text
     
     def setNodeosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, '')
-       if ok and text != '':
-           os.environ['EOS_NODEOS'] = text
-    
+
+        os.environ['CLEOS'] = 'cleos'
+        os.environ['EOS_NODEOS'] = 'nodeos'
+        os.environ['NODEOS_DATA'] = '/tmp/eosio/data/'
+        self.parent.blockchain.isContainer = True
+        # command = "alias cleos='docker exec -it eosio /opt/eosio/bin/cleos -u http://0.0.0.0:8888 --wallet-url http://0.0.0.0:8888'"  # the shell command
+        # process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
+        # output = process.communicate()
+        # print(output[0].decode())
+        # command = "alias nodeos='dolistWalletscker exec -it eosio /opt/eosio/bin/nodeos'"  # the shell command
+        # process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
+        # output = process.communicate()
+        # print(output[0].decode())
+
     def setKeosdPath(self):
        text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, '')
        if ok and text != '':
