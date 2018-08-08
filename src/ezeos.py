@@ -673,16 +673,33 @@ class GUI(QProcess):
     def createWallet(self):
         out = ''
         try:
-            walletDir = os.environ['HOME'] + '/eosio-wallet'
-            if not os.path.exists(walletDir):
-                os.makedirs(walletDir)
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
-            self.getInfoLabel.setText(str(out))
+            if self.blockchain.net == 'test':
+                walletDir = os.environ['HOME'] + '/eosio-wallet'
+                if not os.path.exists(walletDir):
+                    os.makedirs(walletDir)
+                url = "http://{}/v1/wallet/create".format(self.blockchain.testProducer)
+                payload = "\"{}\"".format(self.wallet.name)
+                response = requests.request("POST", url, data=payload)
+                out = response.text
+            if self.blockchain.net == 'main':
+                walletDir = os.environ['HOME'] + '/eosio-wallet'
+                if not os.path.exists(walletDir):
+                    os.makedirs(walletDir)
+                url = "http://{}/v1/wallet/create".format(self.blockchain.producer)
+                payload = "\"{}\"".format(self.wallet.name)
+                response = requests.request("POST", url, data=payload)
+                out = response.text
+            else:
+                walletDir = os.environ['HOME'] + '/eosio-wallet'
+                if not os.path.exists(walletDir):
+                    os.makedirs(walletDir)
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
+
         except:
 
             print('Cannot create Wallet')
-            text = 'Cannot create Wallet' + str(out)
-            self.getInfoLabel.setText(text)
+            out = 'Cannot create Wallet' + str(out)
+        self.getInfoLabel.setText(out)
 
     def setOwnerKey(self):    
         out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
@@ -844,6 +861,30 @@ class GUI(QProcess):
         self.getInfoLabel.setText(str(out))    
     
     def listWallets(self):
+        out = ''
+        try:
+            if self.blockchain.net == 'test':
+                url = "http://{}/v1/wallet/list_wallets".format(self.blockchain.testProducer)
+                response = requests.request("POST", url)
+                print(response.text)
+            if self.blockchain.net == 'main':
+                url = "http://{}/v1/wallet/list_wallets".format(self.blockchain.producer)
+                response = requests.request("POST", url)
+                print(response.text)
+            else:
+                walletDir = os.environ['HOME'] + '/eosio-wallet'
+                if not os.path.exists(walletDir):
+                    os.makedirs(walletDir)
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
+        except:
+
+            print('Cannot create Wallet')
+            out = 'Cannot create Wallet' + str(out)
+        self.getInfoLabel.setText(out)
+
+
+
+        #########
         out = ''
         try:
             out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
