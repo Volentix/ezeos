@@ -10,6 +10,9 @@ from subprocess import Popen, PIPE
 import platform
 import re
 import shutil
+import requests
+import json
+
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
@@ -72,7 +75,9 @@ class BlockChain():
                                 ]
         self.testProducerList = [
 
-				    				 '172.31.26.114:8888',
+
+				    				 '35.182.129.86:8888',
+                                     '127.0.0.1:8888',
                                      'eosgreen.uk.to:9875',
                                      'ctestnet.edenx.io:62071',
                                      '54.194.49.21:9875',
@@ -850,40 +855,65 @@ class GUI(QProcess):
         out = ''
         try:
             if self.blockchain.net == 'test':
-                producerConv = 'https://' + self.blockchain.testProducer
-                print(producerConv)
-                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number ])
-            elif self.blockchain.net == 'local' :
-                out = subprocess.check_output([os.environ['CLEOS'], 'get', 'block', self.blockchain.block.number])
-            elif self.blockchain.net == 'main':
-                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number])
+                url = "http://{}/v1/chain/get_block".format(self.blockchain.testProducer)
 
+                payload = dict(block_num_or_id = self.blockchain.block.number)
+                payload = json.dumps(payload)
+                response = requests.request("POST", str(url), data=payload)
+                out = response.text
+            elif self.blockchain.net == 'local' :
+                 out = subprocess.check_output([os.environ['CLEOS'], 'get', 'block', self.blockchain.block.number])
+            elif self.blockchain.net == 'main':
+                 out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'block', self.blockchain.block.number])
         except:
-            out = 'no'
+            out = 'Cannot get block info'
         self.getInfoLabel.setText(str(out))
         
     def listProducers(self):
         out = ''
-        if self.blockchain.net == 'test':
-            producerConv = 'https://' + self.blockchain.testProducer
-            print(producerConv)
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443' , 'system', 'listproducers'])
-        elif self.blockchain.net == 'main' :
-            producerConv = self.blockchain.producer
-            print(producerConv)
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443', 'system', 'listproducers'])
-        self.getInfoLabel.setText(str(out))    
+        try:
+            if self.blockchain.net == 'test':
+                url = "http://{}/v1/chain/get_producers".format(self.blockchain.testProducer)
+                payload = dict(json = true)
+                payload = json.dumps(payload)
+                response = requests.request("POST", url, data=payload)
+                out = response.text
+            elif self.blockchain.net == 'local' :
+                 out = subprocess.check_output(os.environ['CLEOS'], ['get', 'producers'])
+            elif self.blockchain.net == 'main':
+                url = "http://{}/v1/chain/get_producers".format(self.blockchain.producer)
+                payload = dict(json = true)
+                payload = json.dumps(payload)
+                response = requests.request("POST", url, data=payload)
+                out = response.text
+
+        except:
+            out = 'Cannot get block info'
+        self.getInfoLabel.setText(str(out))
+
+        # if self.blockchain.net == 'test':
+        #     print('test')
+        #     producerConv = 'https://' + self.blockchain.testProducer
+        #     print(producerConv)
+        #     out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443' , 'system', 'listproducers'])
+        # elif self.blockchain.net == 'main' :
+        #     producerConv = self.blockchain.producer
+        #     print(producerConv)
+        #     out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443', 'system', 'listproducers'])
+        # self.getInfoLabel.setText(str(out))
      
     def getProducerInfo(self): 
         out = ''
         if self.blockchain.net == 'test':
-            producerConv = 'https://' + self.blockchain.testProducer
-            print(producerConv)
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
-            self.getInfoLabel.setText(str(self.blockchain.producer + '\n' + out))   
+            producerConv = "http://" + self.blockchain.testProducer
+            out = subprocess.check_output([os.environ['CLEOS'], '--url', producerConv, 'get', 'info'])
+            self.getInfoLabel.setText(str(self.blockchain.testProducer + '\n' + out))
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'info'])
-            self.getInfoLabel.setText(str(out))   
+            self.getInfoLabel.setText(str(out))
+        else:
+            out = subprocess.check_output([os.environ['CLEOS'], 'get', 'info'])
+            self.getInfoLabel.setText(str('local' + '\n' + out))
 
     def mainNet(self):
         if self.toggleMainNet.checkState() != 0:
