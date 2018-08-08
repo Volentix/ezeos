@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import *
 from subprocess import Popen, PIPE
 import platform
 import re
+import shutil
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
@@ -67,6 +68,7 @@ class BlockChain():
                                     'https://eu1.eosdac.io:443',
                                 ]
         self.testProducerList = [
+				    				 'http://172.31.26.114:8888'
                                      'eosgreen.uk.to:9875',
                                      'ctestnet.edenx.io:62071',
                                      '54.194.49.21:9875',
@@ -470,7 +472,6 @@ class GUI(QProcess):
     def startNodeos(self):
         self.start(os.environ['EOS_NODEOS'],['--delete-all-blocks'])
 
-
     def readStdOutput(self):
         output = bytearray(self.readAllStandardOutput())
         output = output.decode("ascii")
@@ -625,6 +626,7 @@ class GUI(QProcess):
 
 
         try:
+<<<<<<< Updated upstream
             out = subprocess.check_output(['lsof', '-t', '-i:8900'])
             out = '$(' + str(out) + ')'
             out =re.sub('[^A-Za-z0-9]+', '', out)
@@ -633,6 +635,11 @@ class GUI(QProcess):
             subprocess.check_output(['kill', out])
             out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']])
 
+=======
+            shutil.rmtree(os.environ['NODEOS_DATA'])
+            print('Reset chain')
+            #out = subprocess.check_output(['rm', '-rf', os.environ['NODEOS_DATA']]) 
+>>>>>>> Stashed changes
         except:
             self.blockchain.running = False
             self.getInfoLabel.setText('Chain reset' + str(out))
@@ -652,18 +659,24 @@ class GUI(QProcess):
 
     
     def createWallet(self):
+<<<<<<< Updated upstream
         out = ''
         try:
             walletDir = os.environ['HOME'] + '/eosio-wallet'
+=======
+        try:
+                
+            walletDir = os.environ['HOME'] + '/eosio-wallet'    
+>>>>>>> Stashed changes
             if not os.path.exists(walletDir):
                 os.makedirs(walletDir)
             out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
             self.getInfoLabel.setText(str(out))
         except:
+
             print('Cannot create Wallet')
             text = 'Cannot create Wallet' + str(out)
             self.getInfoLabel.setText(text)
-
 
     def setOwnerKey(self):    
         out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
