@@ -73,7 +73,7 @@ class BlockChain():
         self.testProducerList = [
 
             '127.0.0.1:8888',
-            '35.182.129.86:8888',
+            '35.182.129.86::8888',
 
         ]
 
@@ -160,6 +160,8 @@ class GUI(QProcess):
         self.label.setPixmap(self.pixmap)
         self.startBtn = QPushButton('OK')
         self.stopBtn = QPushButton('Cancel')
+        self.timeTestBtn = QPushButton('TimeTest')
+        self.rcrdtrfBtn = QPushButton('Record Transfer Test')
         self.label2 = QLabel("Test Net")
         self.label = QLabel("Main Net")
         self.setPermissionObjectButton = QPushButton("Set Permission Object")
@@ -399,7 +401,8 @@ class GUI(QProcess):
         self.tab5.setLayout(self.tab5.layout)
 
         self.tab6.layout = QVBoxLayout()
-        # self.tab6.layout.addWidget(self.testFunctionButton)
+        self.tab6.layout.addWidget(self.rcrdtrfBtn)
+        self.tab6.layout.addWidget(self.timeTestBtn)
         self.tab6.layout.addWidget(self.setPermissionObjectButton)
         self.tab6.layout.addWidget(self.testEncryptionButton)
         self.tab6.setLayout(self.tab6.layout)
@@ -420,6 +423,8 @@ class GUI(QProcess):
         self.vbox.addLayout(self.hbox)
         self.startBtn.clicked.connect(self.startNodeos)
         self.stopBtn.clicked.connect(self.kill)
+        self.rcrdtrfBtn.clicked.connect(self.rcrdtrf) 
+        self.timeTestBtn.clicked.connect(self.timeTest) 
         self.central = QWidget()
 
         self.central.setLayout(self.vbox)
@@ -434,15 +439,43 @@ class GUI(QProcess):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
+    
+    def timeTest(self):
+        self.flushWallets()
+        self.createEosioWallet()
+        self.wallet.name = 'test'
+        self.createWallet()
+        self.setActiveKey()
+        self.setOwnerKey()
+        self.importKeys()
+        self.account.name = 'test'
+        self.createAccount()
+        self.order.contract = os.environ['EOS_SOURCE'] + '/contracts/hello/'
+        self.setContractSteps()
+    
+    
+    def rcrdtrf(self):
+        self.flushWallets()
+        self.createEosioWallet()
+        self.wallet.name = 'test'
+        self.createWallet()
+        self.setActiveKey()
+        self.setOwnerKey()
+        self.importKeys()
+        self.account.name = 'test'
+        self.createAccount()
+        self.order.contract = os.environ['EOS_SOURCE'] + '/contracts/hello/'
+        self.setContractSteps()
+        
+    
     def startNodeos(self):
         if self.blockchain.isContainer:
-            command = "nodeos"
+            command = "nodeos --contracts-console --delete-all-blocks"
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
             output = process.communicate()
             print(output[0].decode())
         else:
-            self.start(os.environ['EOS_NODEOS'], ['--delete-all-blocks'])
+            self.start(os.environ['EOS_NODEOS'], ['--contracts-console', '--delete-all-blocks'])
 
     def readStdOutput(self):
         output = bytearray(self.readAllStandardOutput())
@@ -536,7 +569,7 @@ class GUI(QProcess):
             self.setActiveKey()
             self.showKeys()
             # self.importKeys()
-            subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key',
+            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key',
                                      '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])
             # self.account.name = 'eosio'
             # out = self.createAccount()
@@ -632,7 +665,7 @@ class GUI(QProcess):
     def setWalletPublicKeys(self):
         try:
             out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + str(
-                self.wallet.activePublicKey) + '\n' + 'Creator Key: ' + '\n' + str(self.account.creatorActiveKey)
+                self.wallet.activePublicKey) + '\n';
             self.getInfoLabel.setText(str(out))
         except:
             print('could not copy keys')
@@ -667,7 +700,7 @@ class GUI(QProcess):
 
             print('Cannot create Wallet')
             out = 'Cannot create Wallet' + str(out)
-        self.getInfoLabel.setText(out)
+        self.getInfoLabel.setText(str(out))
 
     def setOwnerKey(self):
         out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
@@ -1129,7 +1162,7 @@ class Dialog(QDialog):
 
     def LoadContract(self):
         options = QFileDialog.DontResolveSymlinks | QFileDialog.ShowDirsOnly
-        directory = QFileDialog.getExistingDirectory(self, "EZEOS", "Load Contact", options)
+        directory = QFileDialog.getExistingDirectory(self, "EZEOS", "Load Contract", options)
         self.parent.order.contract = directory
         self.parent.order.contractAccountName = os.path.basename(directory)
         self.parent.getInfoLabel.setText(directory)
