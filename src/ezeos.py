@@ -464,7 +464,7 @@ class GUI(QProcess):
         self.importKeys()
         self.account.name = 'test'
         self.createAccount()
-        self.order.contract = os.environ['EOS_SOURCE'] + '/contracts/hello/'
+        self.order.contract = os.environ['HOME'] + '/ledger/ledgerEntry/'
         self.setContractSteps()
         
     
