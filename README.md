@@ -18,25 +18,33 @@
 
 ## Background
 
-The tool was created as a means to quickly and easily experiment with a local instance of the EOS
-blockchain. PLEASE do not use this for production! Private keys are freely copied and stored unencrypted
-in files. This works great for this tool, not so great for security.
-Tutorial here: https://youtu.be/u6l5eRRJqC0
+The tool was created as a means to quickly and easily experiment with EOSIO on mac or linux.
 
-The main functions you will find are:
-1. Start/stop/flush EOS blockchains
-2. Create wallets
-3. Create tokens (VTX in our case)
-4. Transfer the tokens to another wallet
 
-## Install
-
-This has been tested on Ubuntu, unsure how it will work on other platforms.
 
 1. Install EOSIO (dawn_v4.0.0) in the `~/eos` directory
-2. Python
-3. PyQt4
-4. Intelligent configuration of `nodeos`
+2. Edit nodeos config.ini to include the following entries:
+			# Enable production on a stale chain, since a single-node test chain is pretty much always stale
+			enable-stale-production = true
+			# Enable block production with the testnet producers
+			producer-name = eosio
+			# Load the block producer plugin, so you can produce blocks
+			plugin = eosio::producer_plugin
+			# Wallet plugin
+			plugin = eosio::wallet_api_plugin
+			# As well as API and HTTP plugins
+			plugin = eosio::chain_api_plugin
+			plugin = eosio::http_plugin
+			# This will be used by the validation step below, to view account history
+			plugin = eosio::account_history_api_plugin
+			# print contract's output to console (eosio::chain_plugin)
+			contracts-console = true		
+			# Append the error log to HTTP responses (eosio::http_plugin)
+			verbose-http-errors = true
+3. Python3
+3. PyQt5
+2. pip3 install pexpect
+3. pip3 install requests
 
 ## Usage
 
@@ -48,7 +56,7 @@ cd src
 
 Run:
 ```
-python ezeos.py
+python3 ezeos.py
 ```
 
 Happy hacking!
