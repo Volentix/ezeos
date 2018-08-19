@@ -694,7 +694,7 @@ class GUI(QProcess):
                 walletDir = os.environ['HOME'] + '/eosio-wallet'
                 if not os.path.exists(walletDir):
                     os.makedirs(walletDir)
-                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name, '--to-console'])
 
         except:
 

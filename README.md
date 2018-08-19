@@ -30,8 +30,6 @@ The tool was created as a means to quickly and easily experiment with EOSIO on m
 			producer-name = eosio
 			# Load the block producer plugin, so you can produce blocks
 			plugin = eosio::producer_plugin
-			# Wallet plugin
-			plugin = eosio::wallet_api_plugin
 			# As well as API and HTTP plugins
 			plugin = eosio::chain_api_plugin
 			plugin = eosio::http_plugin
