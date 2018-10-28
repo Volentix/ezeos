@@ -6,10 +6,14 @@ from PyQt5 import QtGui
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *  # QScrollArea, QVBoxLayout, QGridLayout, QTabWidget, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QTextEdit, QLabel, QLineEdit, QFrame, QComboBox, QCheckBox, QInputDialog, QLineEdit
 from subprocess import Popen, PIPE
+from PyQt5 import QtPrintSupport
+import pyte
+import json
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
+
 os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 os.environ['CLEOS'] = "/usr/local/eosio/bin/cleos"
 
@@ -24,6 +28,7 @@ class BlockChain():
         
         self.net = ['main', 'test', 'local']
         self.block = self.Block()
+        self.path = "nodeos"
         self.running = False
         self.producer = ""
         self.testProducer = ""
@@ -76,6 +81,7 @@ class Wallet():
         self.activePublicKey = ""
         self.locked = False
         self.url = "http://localhost:8888"
+        self.toConsole = True
         
     def reset(self):
         self.name = ""
@@ -204,7 +210,7 @@ class GUI(QProcess):
         self.showKeysButton = QPushButton("Show Keys")
         self.listProducersButton = QPushButton("Get Block Producers")
         self.getProducerInfoButton = QPushButton("Get Block Producer Info")
-        self.setCleosPathButton =  QPushButton("Set Cleos Path -default:/usr/local/eosio/bin/cleos)")
+        self.setNodeosPathButton =  QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos)")
         self.producerBox = QComboBox()
         self.testProducerBox = QComboBox()
         self.producerBox.setObjectName(("Access to Main Net"))
@@ -212,18 +218,19 @@ class GUI(QProcess):
         self.toggleMainNet = QCheckBox("Main Net")
         self.toggleTestNet = QCheckBox("Test Net")
         self.toggleLocalNet = QCheckBox("Local Net")
-        
+        self.togglePasswordToConsole = QCheckBox("To Console(1) / To File(0)")
+        self.toggleWalletLock = QCheckBox("Wallet Lock/Unlock")
         for i in self.blockchain.producerList:
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
-        self.setCleosPathButton.clicked.connect(self.dialog.setCleosPath)
+        self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
         self.toggleMainNet.toggled.connect(self.mainNet)
         self.toggleTestNet.toggled.connect(self.testNet)
         self.toggleLocalNet.toggled.connect(self.localNet)
-        self.toggleWalletLock = QCheckBox("Lock Wallet")
+        
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.testEncryptionButton.clicked.connect(self.testEncryption) 
@@ -300,26 +307,24 @@ class GUI(QProcess):
         self.tabs.addTab(self.tab6, "test")
         
         self.tab1.layout = QVBoxLayout()
-        self.tab1.layout.addWidget(self.stopButton)
-        self.tab1.layout.addWidget(self.restartButton)
-        self.tab1.layout.addWidget(self.startButton) 
+        #self.tab1.layout.addWidget(self.stopButton)
+        #self.tab1.layout.addWidget(self.restartButton)
+        #self.tab1.layout.addWidget(self.startButton) 
+        self.tab1.layout.addWidget(self.toggleMainNet)
+        self.tab1.layout.addWidget(self.producerBox)
+        self.tab1.layout.addWidget(self.toggleTestNet)
+        self.tab1.layout.addWidget(self.testProducerBox)
         self.tab1.layout.addWidget(self.getBlockInfoButton)
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
-        self.tab1.layout.addWidget(self.setCleosPathButton)
-        self.tab1.layout.addWidget(self.toggleMainNet)
-        self.tab1.layout.addWidget(self.toggleTestNet)
-        self.tab1.layout.addWidget(self.toggleLocalNet)
-        
-        self.tab1.layout.addWidget(self.label)
-        self.tab1.layout.addWidget(self.producerBox)
-        self.tab1.layout.addWidget(self.label2)
-        self.tab1.layout.addWidget(self.testProducerBox)
-        self.tab1.layout.addWidget(self.getProducerInfoButton)            
+        self.tab1.layout.addWidget(self.getProducerInfoButton)   
+        #self.tab1.layout.addWidget(self.setNodeosPathButton)        
+        #self.tab1.layout.addWidget(self.toggleLocalNet)                
         self.tab1.setLayout(self.tab1.layout)
        
         self.tab2.layout = QVBoxLayout()
-        self.tab2.layout.addWidget(self.walletNameLabel)
+        self.tab2.layout.addWidget(self.togglePasswordToConsole)
+#         self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.toggleWalletLock) 
         self.tab2.layout.addWidget(self.setWalletNameButton)
         self.tab2.layout.addWidget(self.flushButton)
@@ -382,17 +387,17 @@ class GUI(QProcess):
         self.layout.addWidget(self.tabs)
         self.hbox = QHBoxLayout()
             
-        self.edit = QTextEdit()
-        self.edit.setStyleSheet("background-color:black;color: rgb(110, 110, 110);")
+        #self.edit = QTextEdit()
+        #self.edit.setStyleSheet("background-color:black;color: rgb(110, 110, 110);")
 
         
-        self.edit.setWindowTitle("EZEOS")
+        #self.edit.setWindowTitle("EZEOS")
 
         self.vbox = QVBoxLayout()
         self.vbox.addStretch(1)
 
         self.vbox.addLayout(self.layout)
-        self.vbox.addWidget(self.edit)
+        #self.vbox.addWidget(self.edit)
         self.vbox.addLayout(self.hbox)
         self.startBtn.clicked.connect(self.startNodeos)
         self.stopBtn.clicked.connect(self.kill)
@@ -428,22 +433,28 @@ class GUI(QProcess):
             self.startBtn.setDisabled(True)
 
     def startNodeos(self):
-        self.start("/usr/local/eosio/bin/nodeos", ['--delete-all-blocks'])
+        cmd = self.blockchain.path + '&' 
+        out = subprocess.check_output([cmd, '--delete-all-blocks'])
+        screen = pyte.Screen(80, 24)
+        stream = pyte.Stream(screen)
+        stream.feed(out) 
+             
+    
     
     def readStdOutput(self):
         string = self.readAllStandardOutput()
-        #printer = QtPrintSupport.QPrinter()
+        printer = QtPrintSupport.QPrinter()
         # Create painter
-        #painter = QtGui.QPainter()
+        painter = QtGui.QPainter()
         # Start painter
-       # painter.begin(printer)
+        painter.begin(printer)
         # Grab a widget you want to print
-        #screen = self.editor.grab()
+        screen = self.editor.grab()
         # Draw grabbed pixmap
-        #painter.drawPixmap(10, 10, screen)
+        painter.drawPixmap(10, 10, screen)
         # End painting
 #        painter.end()
-        #self.edit.append(string) 
+        self.edit.append(string) 
 
     def createPermissionObject(self, actor, permission):
         permissionobject = {'actor':actor, 'permission':permission}
@@ -534,30 +545,60 @@ class GUI(QProcess):
         self.accountNameLabel.setText('Account Name: ' + self.account.name)
         self.creatorNameLabel.setText('Creator Account Name: ' + self.account.creator)
         self.contractNameLabel.setText('Contract name: ' + self.order.contract)
+        
         self.toggleLocalNet.setChecked(self.blockchain.running)
         if self.blockchain.running:
             self.toggleMainNet.setChecked(False)
             self.toggleTestNet.setChecked(False)
         self.blockchain.producer = self.producerBox.currentText()
         self.blockchain.testProducer = self.testProducerBox.currentText()
-       
-    def getActions(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])   
-        self.getInfoLabel.setText(out)
-    
+        
+        if (self.togglePasswordToConsole.isChecked()):
+            self.wallet.toFile = False
+            self.wallet.toConsole = True   
+        else: 
+            self.wallet.toConsole = False
+            self.wallet.toFile = True
+        
+        if self.isWalletLocked():
+            self.wallet.locked = True
+        else:
+            self.wallet.locked = False
+            
+            self.toggleWalletLock.setChecked(True) 
+            
+    def isWalletLocked(self):
+      out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
+      out = out.decode("utf-8") 
+      index = out.find(self.wallet.name)
+      if(out[index+len(self.wallet.name)+1] == '*'):
+          return False
+      else:
+          return True
+        
     def lockWallet(self):
         if self.wallet.name == '':
             self.getInfoLabel.setText('Please set wallet name:')
             return
-        if self.wallet.locked == False:
-            subprocess.check_output([os.environ['CLEOS'], 'wallet', 'lock', '-n', self.wallet.name])
-            self.wallet.locked = True
-            self.listWallets()
-        else:
-            word = self.dialog.getWord()
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
-            word = ''
-            self.wallet.locked = False
+        try:
+            if not self.wallet.locked:
+                subprocess.check_output([os.environ['CLEOS'], 'wallet', 'lock', '-n', self.wallet.name])
+                self.wallet.locked = True
+                
+                   
+            else:
+                word = self.dialog.getWord()
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
+                word = ''
+                self.wallet.locked = False
+                
+        
+        except:
+            print('could not unlock wallet')
+            
+    def getActions(self):
+        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])   
+        self.getInfoLabel.setText(out)
         
     def stopChain(self):    
         try:
@@ -596,17 +637,33 @@ class GUI(QProcess):
         if ok and text != '':
             out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
             self.getInfoLabel.setText(out)
-    
+            
+   
+                     
+                    
     def setWalletPublicKeys(self):
         out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
         self.getInfoLabel.setText(out)
+        
     
     def createWallet(self):
         walletDir = os.environ['HOME'] + '/eosio-wallet'    
         if not os.path.exists(walletDir):
             os.makedirs(walletDir)
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name])
-        self.getInfoLabel.setText(str(out))
+        try:    
+            if self.wallet.toConsole:
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name, '--to-console'])
+                self.getInfoLabel.setText(str(out))
+                self.wallet.locked = False
+            else:
+                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name, '--file', home + "/" + self.wallet.name])
+                self.getInfoLabel.setText(str(out))
+                self.getInfoLabel.setText("Created wallet and saved password to home directory")
+                self.wallet.locked = False
+ 
+        except:
+            out = "could not create wallet"
+            self.getInfoLabel.setText(str(out))
 
     def setOwnerKey(self):    
         out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
@@ -828,16 +885,13 @@ class GUI(QProcess):
             
     
 class Dialog(QDialog):
-    MESSAGE = "<p>Message boxes have a caption, a text, and up to three " \
-            "buttons, each with standard or custom texts.</p>" \
-            "<p>Click a button to close the message box. Pressing the Esc " \
-            "button will activate the detected escape button (if any).</p>"
+    MESSAGE = ""
 
     def __init__(self, parent):
         super(Dialog, self).__init__()
         self.parent = parent
         self.native = QCheckBox()
-        self.native.setText("Use native file dialog.")
+        self.native.setText("")
         self.native.setChecked(True)
         if sys.platform not in ("win32", "darwin"):
             self.native.hide()
@@ -933,18 +987,17 @@ class Dialog(QDialog):
            self.parent.order.currency = text
            self.parent.getInfoLabel.setText(text)
     
-    def setCleosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Cleos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+    def setNodeosPath(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
        if ok and text != '':
-           os.environ['CLEOS'] = text
-           printos.environ['CLEOS']
+           blockchain.path = text
+           
     
         
 def main():
    
     app = QApplication(sys.argv)
-    app.setStyleSheet("QPushButton { background: grey }")
-  
+    app.setStyleSheet("QPushButton { background: orange }")
     qProcess = GUI()
     qProcess.setProcessChannelMode(QProcess.MergedChannels)
     qProcess.readyReadStandardOutput.connect(qProcess.readStdOutput)
