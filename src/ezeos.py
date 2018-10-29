@@ -9,13 +9,19 @@ from subprocess import Popen, PIPE
 from PyQt5 import QtPrintSupport
 import pyte
 import json
+import psutil
+
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 
 os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
-os.environ['CLEOS'] = "/usr/local/eosio/bin/cleos"
+#os.environ['CLEOS'] = "cleos"
+
 
 class BlockChain():
 
@@ -132,6 +138,13 @@ class Order():
         self.currency = ""
         self.contractAccountName = ""
 
+class Table():
+
+    def __init__(self):
+        self.contract = ""
+        self.table = ""
+        
+        
 
 class GUI(QProcess):
     
@@ -140,6 +153,7 @@ class GUI(QProcess):
         self.wallet = Wallet()
         self.order = Order()
         self.account = Account()
+        self.table = Table()
         self.blockchain = BlockChain()
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_label)
@@ -147,6 +161,10 @@ class GUI(QProcess):
         self.dialog = Dialog(self)
         frameStyle = QFrame.Sunken | QFrame.Panel  
         # Create an instance variable here (of type QTextEdit)
+        self.startBtn = QPushButton('OK')
+        self.setTableNameButton = QPushButton('Set Table Name')
+        self.setContractNameButton = QPushButton('Set Contract Name')
+        
         self.startBtn = QPushButton('OK')
         self.stopBtn = QPushButton('Cancel')
         self.label2 = QLabel("Test Net")
@@ -159,21 +177,22 @@ class GUI(QProcess):
         self.createEosioTokenAccountButton = QPushButton("Create eosio.token wallet and account")
         self.openContractButton = QPushButton("Open Contract")    
         self.setWalletNameButton = QPushButton("Set Wallet Name") 
-        self.openWalletNameButton = QPushButton("Open Wallet") 
-        self.setWalletPublicKeysButton = QPushButton("Set Wallet Public Keys")
+        self.openWalletButton = QPushButton("Open Wallet") 
+        #self.setWalletPublicKeysButton = QPushButton("Set Wallet Public Keys")
         self.restartButton = QPushButton("Reset Local Chain")
         self.startButton = QPushButton("Start Local Chain")
         self.stopButton = QPushButton("Stop Local Chain")
         self.flushButton = QPushButton("Rename wallet directory")
         self.createWalletButton = QPushButton("Create Wallet")
-        self.setOwnerKeyButton = QPushButton("Create Owner Keys")
-        self.setActiveKeyButton = QPushButton("Create Active Keys")
+#         self.setOwnerKeyButton = QPushButton("Create Owner Keys")
+#         self.setActiveKeyButton = QPushButton("Create Active Keys")
         self.importKeysButton = QPushButton("Import Keys To Wallet")
         self.setAccountNameButton = QPushButton("Set Account Name")
+        self.getTableButton = QPushButton("Get Table")
         self.setAccountOwnerButton = QPushButton("Set Account Owner")
         self.setCreatorAccountNameButton = QPushButton("Set Creator Account Name")
         self.setStakeCPUAmountButton = QPushButton("Set CPU Stake")
-        self.setStakeBandWidthAmountButton = QPushButton("Set Bandwidth Stake")
+        self.setStakeBandWidthAmountButton = QPushButton("Stake Bandwidth")
         self.buyRAMButton = QPushButton("Buy RAM")
         self.setBuyRAMAmountButton = QPushButton("Set RAM Stake")
         self.createAccountButton = QPushButton("Create Account")
@@ -210,7 +229,7 @@ class GUI(QProcess):
         self.showKeysButton = QPushButton("Show Keys")
         self.listProducersButton = QPushButton("Get Block Producers")
         self.getProducerInfoButton = QPushButton("Get Block Producer Info")
-        self.setNodeosPathButton =  QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos)")
+        self.setNodeosPathButton = QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos)")
         self.producerBox = QComboBox()
         self.testProducerBox = QComboBox()
         self.producerBox.setObjectName(("Access to Main Net"))
@@ -230,11 +249,12 @@ class GUI(QProcess):
         self.toggleMainNet.toggled.connect(self.mainNet)
         self.toggleTestNet.toggled.connect(self.testNet)
         self.toggleLocalNet.toggled.connect(self.localNet)
-        
+        self.setTableNameButton.clicked.connect(self.dialog.setTableName)
+        self.setContractNameButton.clicked.connect(self.dialog.setContractName)
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.testEncryptionButton.clicked.connect(self.testEncryption) 
-        self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
+        #self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
         self.getAccountDetailsButton.clicked.connect(self.getAccountDetails)
@@ -243,12 +263,13 @@ class GUI(QProcess):
         self.startButton.clicked.connect(self.startChain)
         self.restartButton.clicked.connect(self.resetChain)    
         self.setWalletNameButton.clicked.connect(self.dialog.setWalletName)
-        self.openWalletNameButton.clicked.connect(self.openWalletName)
+        self.openWalletButton.clicked.connect(self.openWallet)
         self.createWalletButton.clicked.connect(self.createWallet)
-        self.setOwnerKeyButton.clicked.connect(self.setOwnerKey)
-        self.setActiveKeyButton.clicked.connect(self.setActiveKey)
+#         self.setOwnerKeyButton.clicked.connect(self.setOwnerKey)
+#         self.setActiveKeyButton.clicked.connect(self.setActiveKey)
         self.importKeysButton.clicked.connect(self.importKeys)
         self.setAccountNameButton.clicked.connect(self.dialog.setAccountName)
+        self.getTableButton.clicked.connect(self.getTable)
         self.setAccountOwnerButton.clicked.connect(self.dialog.setAccountOwner) 
         self.setCreatorAccountNameButton.clicked.connect(self.dialog.setCreatorAccountName)
         self.setStakeCPUAmountButton.clicked.connect(self.dialog.setStakeCPUAmount)
@@ -278,14 +299,7 @@ class GUI(QProcess):
         self.createEosioWalletButton.clicked.connect(self.createEosioWallet)
         self.createEosioTokenAccountButton.clicked.connect(self.createEosioTokenAccount)
         self.stakeBandwidthButton.clicked.connect(self.stakeBandwidth)
-        
-        self.native = QCheckBox()
-        self.native.setText("EZEOS")
-        self.native.setChecked(True)
-        if sys.platform not in ("win32", "darwin"):
-            self.native.hide()
         self.layout = QGridLayout()
-        
         self.getInfoLabel.setFrameStyle(QFrame.Sunken | QFrame.StyledPanel)
         self.getInfoLabel.adjustSize()
         self.layout.addWidget(self.getInfoLabel)
@@ -302,14 +316,14 @@ class GUI(QProcess):
         self.tabs.addTab(self.tab1, "Block chain")
         self.tabs.addTab(self.tab2, "Wallets")
         self.tabs.addTab(self.tab3, "Accounts")
-        self.tabs.addTab(self.tab4, "Contract")
-        self.tabs.addTab(self.tab5, "eosio.token")
-        self.tabs.addTab(self.tab6, "test")
-        
+        self.tabs.addTab(self.tab4, "VolentixTGE")
+#         self.tabs.addTab(self.tab5, "eosio.token")
+#         self.tabs.addTab(self.tab6, "test")
+#         
         self.tab1.layout = QVBoxLayout()
-        #self.tab1.layout.addWidget(self.stopButton)
-        #self.tab1.layout.addWidget(self.restartButton)
-        #self.tab1.layout.addWidget(self.startButton) 
+        # self.tab1.layout.addWidget(self.stopButton)
+        # self.tab1.layout.addWidget(self.restartButton)
+        # self.tab1.layout.addWidget(self.startButton) 
         self.tab1.layout.addWidget(self.toggleMainNet)
         self.tab1.layout.addWidget(self.producerBox)
         self.tab1.layout.addWidget(self.toggleTestNet)
@@ -318,8 +332,8 @@ class GUI(QProcess):
         self.tab1.layout.addWidget(self.setBlockNumberButton)
         self.tab1.layout.addWidget(self.listProducersButton)
         self.tab1.layout.addWidget(self.getProducerInfoButton)   
-        #self.tab1.layout.addWidget(self.setNodeosPathButton)        
-        #self.tab1.layout.addWidget(self.toggleLocalNet)                
+        # self.tab1.layout.addWidget(self.setNodeosPathButton)        
+        # self.tab1.layout.addWidget(self.toggleLocalNet)                
         self.tab1.setLayout(self.tab1.layout)
        
         self.tab2.layout = QVBoxLayout()
@@ -328,23 +342,27 @@ class GUI(QProcess):
         self.tab2.layout.addWidget(self.toggleWalletLock) 
         self.tab2.layout.addWidget(self.setWalletNameButton)
         self.tab2.layout.addWidget(self.flushButton)
-        self.tab2.layout.addWidget(self.openWalletNameButton)
+        self.tab2.layout.addWidget(self.openWalletButton)
         self.tab2.layout.addWidget(self.createWalletButton)
         self.tab2.layout.addWidget(self.listWalletsButton)
-        self.tab2.layout.addWidget(self.setOwnerKeyButton)
-        self.tab2.layout.addWidget(self.setActiveKeyButton)
+#         self.tab2.layout.addWidget(self.setOwnerKeyButton)
+#         self.tab2.layout.addWidget(self.setActiveKeyButton)
         self.tab2.layout.addWidget(self.importKeysButton)
-        self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
+        #self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
         self.tab2.layout.addWidget(self.showKeysButton)
-        self.tab2.layout.addWidget(self.createEosioWalletButton)
+        #self.tab2.layout.addWidget(self.createEosioWalletButton)
 
         self.tab2.setLayout(self.tab2.layout)
         self.tab3.layout = QVBoxLayout()
         self.tab3.layout.addWidget(self.accountNameLabel)
-        self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setAccountNameButton)
-        self.tab3.layout.addWidget(self.setAccountOwnerButton)
+        self.tab3.layout.addWidget(self.getBalanceButton)
+        self.tab3.layout.addWidget(self.getAccountDetailsButton)
+        self.tab3.layout.addWidget(self.getActionsButton)
+       
+        self.tab3.layout.addWidget(self.creatorNameLabel)  
         self.tab3.layout.addWidget(self.setCreatorAccountNameButton)
+        self.tab3.layout.addWidget(self.setAccountOwnerButton)
         self.tab3.layout.addWidget(self.setStakeCPUAmountButton)
         self.tab3.layout.addWidget(self.setStakeBandWidthAmountButton)
         self.tab3.layout.addWidget(self.setBuyRAMAmountButton)
@@ -353,18 +371,19 @@ class GUI(QProcess):
         self.tab3.layout.addWidget(self.setSendAmountButton)
         self.tab3.layout.addWidget(self.setSendRecipientAccountButton)
         self.tab3.layout.addWidget(self.sendAmountButton)
-        self.tab3.layout.addWidget(self.getAccountDetailsButton)
-        self.tab3.layout.addWidget(self.getActionsButton)
-        self.tab3.layout.addWidget(self.getBalanceButton)
-        self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
+        #self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
         self.tab3.layout.addWidget(self.stakeBandwidthButton)
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QVBoxLayout()
-        #self.tab4.layout.addWidget(self.contractNameLabel)
-        self.tab4.layout.addWidget(self.openContractButton)
-        self.tab4.layout.addWidget(self.openFileNameButton)
-        self.tab4.layout.addWidget(self.loadEosioContractButton)
+        self.tab4.layout.addWidget(self.setAccountNameButton)
+        self.tab4.layout.addWidget(self.setContractNameButton)
+        self.tab4.layout.addWidget(self.setTableNameButton)
+        self.tab4.layout.addWidget(self.getTableButton)
+        # self.tab4.layout.addWidget(self.contractNameLabel)
+#         self.tab4.layout.addWidget(self.openContractButton)
+#         self.tab4.layout.addWidget(self.openFileNameButton)
+#         self.tab4.layout.addWidget(self.loadEosioContractButton)
         self.tab4.setLayout(self.tab4.layout)
     
         self.tab5.layout = QVBoxLayout()
@@ -387,37 +406,50 @@ class GUI(QProcess):
         self.layout.addWidget(self.tabs)
         self.hbox = QHBoxLayout()
             
-        #self.edit = QTextEdit()
-        #self.edit.setStyleSheet("background-color:black;color: rgb(110, 110, 110);")
-
-        
-        #self.edit.setWindowTitle("EZEOS")
-
         self.vbox = QVBoxLayout()
-        self.vbox.addStretch(1)
+        self.vbox.addStretch(50)
 
         self.vbox.addLayout(self.layout)
-        #self.vbox.addWidget(self.edit)
+        # self.vbox.addWidget(self.edit)
         self.vbox.addLayout(self.hbox)
         self.startBtn.clicked.connect(self.startNodeos)
         self.stopBtn.clicked.connect(self.kill)
         self.stateChanged.connect(self.slotChanged)
         
         self.central = QWidget()
-
         self.central.setLayout(self.vbox)
         self.central.show()
-        
+        self.scrollAreaWidgetContents = self.tabs
         self.scrollArea = QScrollArea()
         self.layout.addWidget(self.scrollArea)
-        self.scrollAreaWidgetContents = self.tabs
-        self.scrollArea.setGeometry(QtCore.QRect(3000, 3000, 3000, 3000))
+        self.scrollArea.setGeometry(QtCore.QRect(1000, 1000, 1000, 1000))
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
+     
+    def getTable(self):
+        out = ""
+        try:
+            if self.blockchain.net == 'test':
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'table', self.account.name, self.table.contract, self.table.table])
+            elif self.blockchain.net == 'main' :
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'table', self.account.name, self.table.contract, self.table.table])            
+        except:
+            print('could not get table')
+        self.getInfoLabel.setText(str(out))    
+    
+    def openWallet(self):
+         out = ''   
+         try:
+             out = subprocess.check_output(['cleos', 'wallet', 'open', '-n', self.wallet.name])
+             
+         except:
+             print('could not open wallet')
+         
+         self.getInfoLabel.setText(str(out))    
+    
     def showDialog(self):
         
         text, ok = QInputDialog.getText(self, 'Input Dialog',
@@ -438,8 +470,6 @@ class GUI(QProcess):
         screen = pyte.Screen(80, 24)
         stream = pyte.Stream(screen)
         stream.feed(out) 
-             
-    
     
     def readStdOutput(self):
         string = self.readAllStandardOutput()
@@ -465,13 +495,13 @@ class GUI(QProcess):
         actors = ['partner11111', 'partner22222', 'partner33333']
         multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2, 1, actors, 'active'))
         self.account.name = 'mymultisig11'        
-        subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name + '@owner', ]) 
+        subprocess.check_output(['cleos', 'set', 'account', 'permission', self.account.name, 'active', multiSigPermissionObject, 'owner', '-p', self.account.name + '@owner', ]) 
         # cleos set account permission mymultisig11 owner 
         # '{"threshold":2,"keys":[],"accounts":[{"permission":{"actor":"partner11111","permission":"owner"},"weight":1},{"permission":{"actor":"partner22222","permission":"owner"},"weight":1},{"permission":{"actor":"partner33333","permission":"owner"},"weight":1}],"waits":[]}' 
         # -p mymultisig11@owner
         multiSigPermissionObject = json.dumps(self.createMultiSigAccountObject(2, 1, actors, 'owner'))
         self.account.name = 'mymultisig11'        
-        out = subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, 'owner', multiSigPermissionObject, '-p', self.account.name + '@owner', ])
+        out = subprocess.check_output(['cleos', 'set', 'account', 'permission', self.account.name, 'owner', multiSigPermissionObject, '-p', self.account.name + '@owner', ])
         self.getInfoLabel.setText(out)
                
     def createPermissionObjectPK(self, threshold, weight):
@@ -487,11 +517,15 @@ class GUI(QProcess):
         return finalToken
     
     def setOwnerPermission(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
+        out = subprocess.check_output(['cleos', 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
         self.getInfoLabel.setText(out)
 
     def stakeBandwidth(self):
-        out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
+        out =''
+        try:
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
+        except:
+            print('could not stake bw')
         self.getInfoLabel.setText(out)
     
     def testEncryption(self):
@@ -512,10 +546,10 @@ class GUI(QProcess):
     def createEosioTokenAccount(self):
         self.wallet.name = 'eosio.token'
         self.createWallet()
-        self.setOwnerKey()
-        self.setActiveKey()
+#         self.setOwnerKey()
+#         self.setActiveKey()
         self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])   
+        subprocess.check_output(['cleos', 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])   
         # cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
     
     def createEosioWallet(self):
@@ -526,19 +560,22 @@ class GUI(QProcess):
         self.setActiveKey()
         self.showKeys()
         # self.importKeys()
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
+        subprocess.check_output(['cleos', 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
         self.account.name = 'eosio'
         out = self.createAccount()   
         self.getInfoLabel.setText(out)
 
     def loadEosioContract(self):
         # cleos set contract eosio build/contracts/eosio.bios -p eosio
-        out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])   
+        out = subprocess.check_output(['cleos', 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])   
         self.getInfoLabel.setText(out)
     
     def showKeys(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'keys']) 
-        self.getInfoLabel.setText(str(out))
+        try:
+            out = subprocess.check_output(['cleos', 'wallet', 'keys']) 
+            self.getInfoLabel.setText(str(out))
+        except:
+            print('could not show keys')
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
@@ -559,19 +596,21 @@ class GUI(QProcess):
         else: 
             self.wallet.toConsole = False
             self.wallet.toFile = True
-        
-        if self.isWalletLocked():
-            self.wallet.locked = True
-        else:
-            self.wallet.locked = False
-            
-            self.toggleWalletLock.setChecked(True) 
+        try:
+            if self.isWalletLocked():
+                self.wallet.locked = True
+                #self.toggleWalletLock.setChecked(True)
+            else:
+                self.wallet.locked = False
+                self.toggleWalletLock.setChecked(True) 
+        except:
+            print('No Wallets')
             
     def isWalletLocked(self):
-      out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
+      out = subprocess.check_output(['cleos', 'wallet', 'list'])
       out = out.decode("utf-8") 
       index = out.find(self.wallet.name)
-      if(out[index+len(self.wallet.name)+1] == '*'):
+      if(out[index + len(self.wallet.name) + 1] == '*'):
           return False
       else:
           return True
@@ -582,23 +621,29 @@ class GUI(QProcess):
             return
         try:
             if not self.wallet.locked:
-                subprocess.check_output([os.environ['CLEOS'], 'wallet', 'lock', '-n', self.wallet.name])
+                subprocess.check_output(['cleos', 'wallet', 'lock', '-n', self.wallet.name])
                 self.wallet.locked = True
-                
                    
             else:
                 word = self.dialog.getWord()
-                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
+                out = subprocess.check_output(['cleos', 'wallet', 'unlock', '-n', self.wallet.name, '--password', word])
                 word = ''
                 self.wallet.locked = False
-                
         
         except:
             print('could not unlock wallet')
             
     def getActions(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'actions', self.account.name])   
-        self.getInfoLabel.setText(out)
+        out = ''
+        try:
+            if self.blockchain.net == 'test':
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'actions', self.account.name ])
+            elif self.blockchain.net == 'main' :
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'actions', self.account.name ])
+            
+        except:
+            print('could not get actions')
+        self.getInfoLabel.setText(str(out))
         
     def stopChain(self):    
         try:
@@ -630,33 +675,23 @@ class GUI(QProcess):
         self.wallet.reset()
         self.order.reset()
     
-    def openWalletName(self):
-        text, ok = QInputDialog.getText(self, "QInputDialog.getText()",
-                "Wallet name:", QLineEdit.Normal,
-                QtCore.QDir.home().dirName())
-        if ok and text != '':
-            out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'open', '-n', text])
-            self.getInfoLabel.setText(out)
-            
-   
-                     
                     
     def setWalletPublicKeys(self):
         out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
         self.getInfoLabel.setText(out)
-        
     
     def createWallet(self):
+        
         walletDir = os.environ['HOME'] + '/eosio-wallet'    
         if not os.path.exists(walletDir):
             os.makedirs(walletDir)
         try:    
             if self.wallet.toConsole:
-                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name, '--to-console'])
+                out = subprocess.check_output(['cleos', 'wallet', 'create', '-n', self.wallet.name, '--to-console'])
                 self.getInfoLabel.setText(str(out))
                 self.wallet.locked = False
             else:
-                out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'create', '-n', self.wallet.name, '--file', home + "/" + self.wallet.name])
+                out = subprocess.check_output(['cleos', 'wallet', 'create', '-n', self.wallet.name, '--file', home + "/" + self.wallet.name])
                 self.getInfoLabel.setText(str(out))
                 self.getInfoLabel.setText("Created wallet and saved password to home directory")
                 self.wallet.locked = False
@@ -666,7 +701,7 @@ class GUI(QProcess):
             self.getInfoLabel.setText(str(out))
 
     def setOwnerKey(self):    
-        out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
+        out = subprocess.check_output(['cleos', 'create', 'key'])
         key = out[13:]
         key = key[:-67]
         key2 = out[77:]
@@ -676,47 +711,44 @@ class GUI(QProcess):
         self.getInfoLabel.setText('Creating owner keys')
 
     def setActiveKey(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'create', 'key'])
-        key = out[13:]
-        key = key[:-67]
-        key2 = out[77:]
-        key2 = key2[:-1]
-        self.wallet.activePrivateKey = key
-        self.wallet.activePublicKey = key2
-        self.getInfoLabel.setText('Creating active keys')
+        try:
+            if self.wallet.toConsole:
+                    subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey, '--to-console'])
+                    subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey, '--to-console'])
+            else:
+                    subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey, '--file', home + "/owner" + self.wallet.name])
+                    subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey, '--file', home + "/owner" + self.wallet.name])
+            self.getInfoLabel.setText('Creating active keys')        
+        except:
+            print('cannot create keys')           
+
+        
         
     def importKeys(self):
-        if self.wallet.ownerPrivateKey == '':
-            self.getInfoLabel.setText('Create keys first')
-            return
-        if self.wallet.activePrivateKey == '':
-            self.getInfoLabel.setText('Create keys first')
-            return
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey])
-        subprocess.check_output([os.environ['CLEOS'], 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey])
-        self.wallet.ownerPrivateKey = ''
-        self.wallet.activePrivateKey = ''
+        try:
+            subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
+            subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
+        except:
+            print('could not import keys')
+        
         self.getInfoLabel.setText('Imported keys to wallet')
         
     def createAccount(self):
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
+            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
             permission = self.account.creator + '@active'
-            out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
         self.getInfoLabel.setText(str(out))
-    
-    
         
     def setContractSteps(self):
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name ])
+            out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name ])
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
         self.getInfoLabel.setText(out)
-        
    
     def issueCurrency(self):
         token1 = '{"issuer": "'
@@ -726,14 +758,12 @@ class GUI(QProcess):
         token5 = '", "can_freeze": 1, "can_recall": 1, "can_whitelist": 1}'
         finalToken = token1 + token2 + token3 + token4 + token5
         print(finalToken)
-        out = subprocess.check_output([os.environ['CLEOS'], 'push', 'action', self.account.name, 'create', finalToken, '-p', self.account.name + '@active']) 
+        out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'create', finalToken, '-p', self.account.name + '@active']) 
         self.getInfoLabel.setText(out)
-    
-    
     
     def buyRAM(self):       
     # cleos system buyram payer receiver tokens
-        out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'system', 'buyram', self.account.name, self.account.receiver, self.order.buyRam])
+        out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'buyram', self.account.name, self.account.receiver, self.order.buyRam])
         self.getInfoLabel.setText(out)
     
     def issueToAccount(self):
@@ -744,7 +774,7 @@ class GUI(QProcess):
         token4 = self.order.amount
         token5 = '", "memo"]'
         finalToken = token1 + token2 + token3 + str(token4) + token5
-        out = subprocess.check_output([os.environ['CLEOS'], 'push', 'action', self.account.name, 'issue', finalToken, '-p', self.account.name])  # + '@active']) 
+        out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'issue', finalToken, '-p', self.account.name])  # + '@active']) 
         self.getInfoLabel.setText(out)
         
     def transferToAccount(self):
@@ -755,17 +785,20 @@ class GUI(QProcess):
         token5 = '", "memo": "testing"}'
         finalToken = token1 + token2 + token3 + str(token4) + token5
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name]) 
+            out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name]) 
         elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name ])
+            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'push', 'action', self.account.name, 'transfer', finalToken, '-p', self.account.name ])
         self.getInfoLabel.setText(out)
    
     def sendToAccount(self):
         out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'transfer', self.account.name, self.account.receiver, self.order.amount]) 
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            out = subprocess.check_output([os.environ['CLEOS'], '-u', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
+        try:
+            if self.blockchain.net == 'main':
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount]) 
+            elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+                out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
+        except:
+            print('cannot send funds')
         self.getInfoLabel.setText(out)
 
     def flushWallets(self):
@@ -782,44 +815,51 @@ class GUI(QProcess):
         subprocess.check_output(['killall', 'keosd'])
 
     def getInfo(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'info'])
+        out = subprocess.check_output(['cleos', 'get', 'info'])
         self.getInfoLabel.setText(out)
         
     def getAccountDetails(self):    
         out = ''
         if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'get', 'account', self.account.name ])
+            out = subprocess.check_output(['cleos', 'get', 'account', self.account.name ])
         elif self.blockchain.net == 'main' :
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
         self.getInfoLabel.setText(str(out))   
     
     def getBalance(self):   
         out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output([os.environ['CLEOS'], 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
+        if self.blockchain.net == 'test':
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
         elif self.blockchain.net == 'main' :
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])       
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])       
         self.getInfoLabel.setText(str(out))    
     
     def listWallets(self):
-        out = subprocess.check_output([os.environ['CLEOS'], 'wallet', 'list'])
-        self.getInfoLabel.setText(str(out))
+        try:
+            out = subprocess.check_output(['cleos', 'wallet', 'list'])
+            self.getInfoLabel.setText(str(out))
+        except:
+            print('cannot list wallets')
         
     def getBlockInfo(self):    
-        out = subprocess.check_output([os.environ['CLEOS'], 'get', 'block', self.blockchain.block.number])
+        out = ''
         self.getInfoLabel.setText(str(out))
+        if self.blockchain.net == 'test':
+             out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number])
+        elif self.blockchain.net == 'main' :
+             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'block', self.blockchain.block.number])       
+        self.getInfoLabel.setText(str(out))    
         
-   
-     
+        
     def getProducerInfo(self): 
         out = ''
         if self.blockchain.net == 'test':
             producerConv = 'https://' + self.blockchain.testProducer
             print(producerConv)
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
+            out = subprocess.check_output(['cleos', '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
             self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
         elif self.blockchain.net == 'main' :
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'info'])
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
             self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
 
     def mainNet(self):
@@ -863,22 +903,20 @@ class GUI(QProcess):
     def getProducerInfo(self): 
         out = ''
         if self.blockchain.net == 'test':
-            producerConv = 'https://' + self.blockchain.testProducer
-            print(producerConv)
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
-            self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
-        elif self.blockchain.net == 'main' :
-            out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'get', 'info'])
-            self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)           
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'info'])
+            self.getInfoLabel.setText(str(out))   
+        elif self.blockchain.net == 'main':
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
+            self.getInfoLabel.setText(str(out))           
     
     def listProducers(self): 
         out = ''
         try:
             if self.blockchain.net == 'test':
-                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.testProducer, 'system', 'listproducers'])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'system', 'listproducers'])
                 self.getInfoLabel.setText(str(out))   
             elif self.blockchain.net == 'main' :
-                out = subprocess.check_output([os.environ['CLEOS'], '--url', self.blockchain.producer, 'system', 'listproducers'])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'listproducers'])
                 self.getInfoLabel.setText(str(out))
         except:
             print("Could not get producer list")       
@@ -890,11 +928,6 @@ class Dialog(QDialog):
     def __init__(self, parent):
         super(Dialog, self).__init__()
         self.parent = parent
-        self.native = QCheckBox()
-        self.native.setText("")
-        self.native.setChecked(True)
-        if sys.platform not in ("win32", "darwin"):
-            self.native.hide()
         
     def setCreatorAccountName(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Account Creator Name:", QLineEdit.Normal, "")
@@ -942,31 +975,31 @@ class Dialog(QDialog):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Amount:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.amount = text 
-            self.parent.getInfoLabel.setText(self.order.amount)
+            self.parent.getInfoLabel.setText(self.parent.order.amount)
     
     def setSendAmount(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Send Amount:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.amount = text 
-            self.parent.getInfoLabel.setText(self.order.amount)
+            self.parent.getInfoLabel.setText(self.parent.order.amount)
             
     def setStakeCPUAmount(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set CPU Stake:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.stakeCPU = text 
-            self.parent.getInfoLabel.setText(self.order.stakeCPU)
+            self.parent.getInfoLabel.setText(self.parent.order.stakeCPU)
             
     def setStakeBandWidthAmount(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Bandwidth Stake:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.stakeBandWidth = text 
-            self.parent.getInfoLabel.setText(self.order.stakeBandWidth)
+            self.parent.getInfoLabel.setText(self.parent.order.stakeBandWidth)
             
     def setBuyRAMAmount(self):
         text, ok = QInputDialog.getText(self, "EZEOS", "Set Ram Stake:", QLineEdit.Normal, '')
         if ok and text != '':
             self.parent.order.buyRam = text 
-            self.parent.getInfoLabel.setText(self.order.buyRam)
+            self.parent.getInfoLabel.setText(self.parent.order.buyRam)
     
     def setRecipientAccount(self):
         text, ok = QInputDialog.getText(self, "Receipent Account:", "Recipient Account Name:", QLineEdit.Normal, '')
@@ -991,17 +1024,32 @@ class Dialog(QDialog):
        text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
        if ok and text != '':
            blockchain.path = text
-           
+
+    def setTableName(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       if ok and text != '':
+           self.parent.table.table = text
+
+    def setContractName(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       if ok and text != '':
+           self.parent.table.contract = text
+
     
-        
+def killKeosd():
+    for p in psutil.process_iter(attrs=['pid', 'name']): 
+        if 'keosd' in p.info['name']:
+            pid = str(p.info['pid'])
+            out = subprocess.check_output(['kill', pid])        
 def main():
    
     app = QApplication(sys.argv)
-    app.setStyleSheet("QPushButton { background: orange }")
+    app.setStyleSheet("QPushButton { background: white }")
     qProcess = GUI()
     qProcess.setProcessChannelMode(QProcess.MergedChannels)
     qProcess.readyReadStandardOutput.connect(qProcess.readStdOutput)
-    
+    #killKeosd()
+    out = subprocess.Popen(["keosd"],stdout=subprocess.PIPE)
     return app.exec_()
 
 
