@@ -11,17 +11,20 @@ import pyte
 import json
 import psutil
 from pprint import pprint
+import uuid
+
 
 def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
+
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 
 os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
-#os.environ['CLEOS'] = "cleos"
+# os.environ['CLEOS'] = "cleos"
 
 
 class BlockChain():
@@ -133,6 +136,7 @@ class Order():
         self.stakeBandWidth = ""
         self.buyRam = 0
         self.vDexKey = ""
+        self.message = ""
 
     def reset(self):
         self.to = ""
@@ -141,13 +145,13 @@ class Order():
         self.currency = ""
         self.contractAccountName = ""
 
+
 class Table():
 
     def __init__(self):
         self.contract = ""
         self.table = ""
         self.body = []
-        
         
 
 class GUI(QProcess):
@@ -173,6 +177,8 @@ class GUI(QProcess):
         self.stopBtn = QPushButton('Cancel')
         self.label2 = QLabel("Test Net")
         self.label = QLabel("Main Net")
+        self.setMessageButton = QPushButton("Set Message")
+        self.vtxTransferButton = QPushButton("vtxdistrib to wallet")
         self.getVtxBalanceButton = QPushButton("Get Vtx Balance")
         self.setVDexPublicKeyButton = QPushButton("Set VDex Key")
         self.setPermissionObjectButton = QPushButton("Set Permission Object")
@@ -184,7 +190,7 @@ class GUI(QProcess):
         self.openContractButton = QPushButton("Open Contract")    
         self.setWalletNameButton = QPushButton("Set Wallet Name") 
         self.openWalletButton = QPushButton("Open Wallet") 
-        #self.setWalletPublicKeysButton = QPushButton("Set Wallet Public Keys")
+        # self.setWalletPublicKeysButton = QPushButton("Set Wallet Public Keys")
         self.restartButton = QPushButton("Reset Local Chain")
         self.startButton = QPushButton("Start Local Chain")
         self.stopButton = QPushButton("Stop Local Chain")
@@ -249,6 +255,7 @@ class GUI(QProcess):
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
+        self.setMessageButton.clicked.connect(self.dialog.setMessage)            
         self.getVtxBalanceButton.clicked.connect(self.getVtxBalance)
         self.setVDexPublicKeyButton.clicked.connect(self.dialog.setVdexKey)    
         self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
@@ -262,7 +269,7 @@ class GUI(QProcess):
         self.toggleWalletLock.toggled.connect(self.lockWallet)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.testEncryptionButton.clicked.connect(self.testEncryption) 
-        #self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
+        # self.setWalletPublicKeysButton.clicked.connect(self.setWalletPublicKeys)
         self.listWalletsButton.clicked.connect(self.listWallets)
         self.getBalanceButton.clicked.connect(self.getBalance)    
         self.getAccountDetailsButton.clicked.connect(self.getAccountDetails)
@@ -276,6 +283,7 @@ class GUI(QProcess):
 #         self.setOwnerKeyButton.clicked.connect(self.setOwnerKey)
 #         self.setActiveKeyButton.clicked.connect(self.setActiveKey)
         self.importKeysButton.clicked.connect(self.importKeys)
+        self.vtxTransferButton.clicked.connect(self.recordTransfer)
         self.setAccountNameButton.clicked.connect(self.dialog.setAccountName)
         self.getTableButton.clicked.connect(self.getTable)
         self.setAccountOwnerButton.clicked.connect(self.dialog.setAccountOwner) 
@@ -356,14 +364,17 @@ class GUI(QProcess):
 #         self.tab2.layout.addWidget(self.setOwnerKeyButton)
 #         self.tab2.layout.addWidget(self.setActiveKeyButton)
         self.tab2.layout.addWidget(self.importKeysButton)
-        #self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
+        # self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
         self.tab2.layout.addWidget(self.showKeysButton)
-        #self.tab2.layout.addWidget(self.createEosioWalletButton)
+        # self.tab2.layout.addWidget(self.createEosioWalletButton)
 
         self.tab2.setLayout(self.tab2.layout)
         self.tab3.layout = QVBoxLayout()
         self.tab3.layout.addWidget(self.accountNameLabel)
+        
         self.tab3.layout.addWidget(self.setAccountNameButton)
+        self.tab3.layout.addWidget(self.setSendAmountButton)
+        self.tab3.layout.addWidget(self.setMessageButton)
         self.tab3.layout.addWidget(self.getBalanceButton)
         self.tab3.layout.addWidget(self.getAccountDetailsButton)
         self.tab3.layout.addWidget(self.getActionsButton)
@@ -376,20 +387,22 @@ class GUI(QProcess):
         self.tab3.layout.addWidget(self.setBuyRAMAmountButton)
         self.tab3.layout.addWidget(self.buyRAMButton)
         self.tab3.layout.addWidget(self.createAccountButton)
-        self.tab3.layout.addWidget(self.setSendAmountButton)
+        
         self.tab3.layout.addWidget(self.setSendRecipientAccountButton)
         self.tab3.layout.addWidget(self.sendAmountButton)
-        #self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
+        # self.tab3.layout.addWidget(self.createEosioTokenAccountButton)
         self.tab3.layout.addWidget(self.stakeBandwidthButton)
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QVBoxLayout()
-        #self.tab4.layout.addWidget(self.setAccountNameButton)
+        # self.tab4.layout.addWidget(self.setAccountNameButton)
         self.tab4.layout.addWidget(self.setContractNameButton)
+        self.tab4.layout.addWidget(self.setVDexPublicKeyButton)
+        self.tab4.layout.addWidget(self.vtxTransferButton)
         self.tab4.layout.addWidget(self.setTableNameButton)
         self.tab4.layout.addWidget(self.getTableButton)
-        self.tab4.layout.addWidget(self.setVDexPublicKeyButton)
         self.tab4.layout.addWidget(self.getVtxBalanceButton)
+       
         
         # self.tab4.layout.addWidget(self.contractNameLabel)
 #         self.tab4.layout.addWidget(self.openContractButton)
@@ -440,11 +453,24 @@ class GUI(QProcess):
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
     
-    
+    def recordTransfer(self):
+        object = ['112vtxledger', 'vtxdistrib', 'vtxtrust', 100.12345678, '', 'EOS81gkcgHo6Q12m8tjd2Ye5m18zbr4wGWh2bqU3XuLYrburgEf2T', 'test', 'nonce']
+        object[0] = self.account.name
+        object[3] = self.order.amount
+        object[5] = self.order.vDexKey
+        object = json.dumps(object)
+        try:
+            if self.blockchain.net == 'test' :
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', '112vtxledger' + '@active'])
+            else:
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', '112vtxledger' + '@active'])
+        except:
+            print('could not transfer')
+             
+        print(out)
+        self.getInfoLabel.setText(str(out) + " VTX")
     def getVtxBalance(self):
         out = ""
-        #o = json.loads(self.table.body)
-        #d= o['rows']
         iAmount = 0.0
         fAmount = 0.0
         for i in self.table.body:
@@ -452,10 +478,9 @@ class GUI(QProcess):
                 if(j['sToKey'] == self.order.vDexKey):
                     iAmount += j['iVal']
                     fAmount += j['fVal']
-        
+         
         out = iAmount + fAmount
-        self.getInfoLabel.setText(str(out) + " VTX" )
-    
+        self.getInfoLabel.setText(str(out) + " VTX")
      
     def getTable(self):
         out = ""
@@ -468,7 +493,7 @@ class GUI(QProcess):
                 
             while(1):
                 
-                if self.blockchain.net == 'test':
+               if self.blockchain.net == 'test' :
         
                     out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'table', self.account.name, self.table.contract, self.table.table, '-L', str(lb), '-U', str(ub), '-l', '1000000'])
                     accum = accum + str(out) 
@@ -478,15 +503,15 @@ class GUI(QProcess):
                     if len(d) == 0:
                         break
 
-                elif self.blockchain.net == 'main' :
-                    out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'table', self.account.name, self.table.contract, self.table.table, '-U', {}, '-L', {}]).format(str(ub),str(lb))            
+               elif self.blockchain.net == 'main' :
+                    out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'table', self.account.name, self.table.contract, self.table.table, '-U', {}, '-L', {}]).format(str(ub), str(lb))            
                     accum = accum + str(out) 
                     o = json.loads(out)
                     d = o['rows']
                     if len(d) == 0:
                         break
-                ub = ub * (count + 1)
-                lb = ub - 1000   
+               ub = ub * (count + 1)
+               lb = ub - 1000   
         except:
             print('could not get table')
         self.table.body = entries   
@@ -573,7 +598,7 @@ class GUI(QProcess):
         self.getInfoLabel.setText(out)
 
     def stakeBandwidth(self):
-        out =''
+        out = ''
         try:
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         except:
@@ -651,7 +676,7 @@ class GUI(QProcess):
         try:
             if self.isWalletLocked():
                 self.wallet.locked = True
-                #self.toggleWalletLock.setChecked(True)
+                # self.toggleWalletLock.setChecked(True)
             else:
                 self.wallet.locked = False
                 self.toggleWalletLock.setChecked(True) 
@@ -726,7 +751,6 @@ class GUI(QProcess):
         self.account.reset()
         self.wallet.reset()
         self.order.reset()
-    
                     
     def setWalletPublicKeys(self):
         out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
@@ -773,8 +797,6 @@ class GUI(QProcess):
             self.getInfoLabel.setText('Creating active keys')        
         except:
             print('cannot create keys')           
-
-        
         
     def importKeys(self):
         try:
@@ -906,7 +928,6 @@ class GUI(QProcess):
              out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'block', self.blockchain.block.number])       
         out = out.decode("utf-8")      
         self.getInfoLabel.setText(str(out))    
-        
         
     def getProducerInfo(self): 
         out = ''
@@ -1078,36 +1099,44 @@ class Dialog(QDialog):
        self.parent.getInfoLabel.setText(directory)
    
     def chooseCurrency(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.order.currency = text
            self.parent.getInfoLabel.setText(text)
     
     def setNodeosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, "")
        if ok and text != '':
            blockchain.path = text
 
     def setTableName(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.table.table = text
 
     def setContractName(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Contract Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Contract Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.table.contract = text
 
     def setVdexKey(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Key:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Key:", QLineEdit.Normal, "")
        if ok and text != '':
           self.parent.order.vDexKey = text       
+   
+    def setMessage(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Message:", QLineEdit.Normal, "")
+       if ok and text != '':
+          self.parent.order.message = text       
+
     
 def killKeosd():
     for p in psutil.process_iter(attrs=['pid', 'name']): 
         if 'keosd' in p.info['name']:
             pid = str(p.info['pid'])
             out = subprocess.check_output(['kill', pid])        
+
+
 def main():
    
     app = QApplication(sys.argv)
@@ -1115,8 +1144,8 @@ def main():
     qProcess = GUI()
     qProcess.setProcessChannelMode(QProcess.MergedChannels)
     qProcess.readyReadStandardOutput.connect(qProcess.readStdOutput)
-    #killKeosd()
-    out = subprocess.Popen(["keosd"],stdout=subprocess.PIPE)
+    # killKeosd()
+    out = subprocess.Popen(["keosd"], stdout=subprocess.PIPE)
     return app.exec_()
 
 
