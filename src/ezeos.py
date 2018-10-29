@@ -10,6 +10,7 @@ from PyQt5 import QtPrintSupport
 import pyte
 import json
 import psutil
+from pprint import pprint
 
 def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -72,7 +73,8 @@ class BlockChain():
                                 ]
         self.testProducerList = [
                                     'http://api.kylin.alohaeos.com',
-                                    'http://127.0.0.1:8888'
+                                    'http://127.0.0.1:8888',
+                                    'http://ec2-35-183-129-78.ca-central-1.compute.amazonaws.com:8888'
                                 ]
 
 
@@ -130,6 +132,7 @@ class Order():
         self.stakeCPU = ""
         self.stakeBandWidth = ""
         self.buyRam = 0
+        self.vDexKey = ""
 
     def reset(self):
         self.to = ""
@@ -143,6 +146,7 @@ class Table():
     def __init__(self):
         self.contract = ""
         self.table = ""
+        self.body = []
         
         
 
@@ -169,6 +173,8 @@ class GUI(QProcess):
         self.stopBtn = QPushButton('Cancel')
         self.label2 = QLabel("Test Net")
         self.label = QLabel("Main Net")
+        self.getVtxBalanceButton = QPushButton("Get Vtx Balance")
+        self.setVDexPublicKeyButton = QPushButton("Set VDex Key")
         self.setPermissionObjectButton = QPushButton("Set Permission Object")
         self.stakeBandwidthButton = QPushButton("Set Stake Bandwidth")
         self.testEncryptionButton = QPushButton("TestEncryption")
@@ -243,6 +249,8 @@ class GUI(QProcess):
             self.producerBox.addItem(i)
         for i in self.blockchain.testProducerList:
             self.testProducerBox.addItem(i)
+        self.getVtxBalanceButton.clicked.connect(self.getVtxBalance)
+        self.setVDexPublicKeyButton.clicked.connect(self.dialog.setVdexKey)    
         self.setNodeosPathButton.clicked.connect(self.dialog.setNodeosPath)
         self.setPermissionObjectButton.clicked.connect(self.setPermissionObject)
         self.TestFunctionButton.clicked.connect(self.wallet.testFunction)
@@ -376,10 +384,13 @@ class GUI(QProcess):
         self.tab3.setLayout(self.tab3.layout) 
         
         self.tab4.layout = QVBoxLayout()
-        self.tab4.layout.addWidget(self.setAccountNameButton)
+        #self.tab4.layout.addWidget(self.setAccountNameButton)
         self.tab4.layout.addWidget(self.setContractNameButton)
         self.tab4.layout.addWidget(self.setTableNameButton)
         self.tab4.layout.addWidget(self.getTableButton)
+        self.tab4.layout.addWidget(self.setVDexPublicKeyButton)
+        self.tab4.layout.addWidget(self.getVtxBalanceButton)
+        
         # self.tab4.layout.addWidget(self.contractNameLabel)
 #         self.tab4.layout.addWidget(self.openContractButton)
 #         self.tab4.layout.addWidget(self.openFileNameButton)
@@ -428,17 +439,58 @@ class GUI(QProcess):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+    
+    
+    def getVtxBalance(self):
+        out = ""
+        #o = json.loads(self.table.body)
+        #d= o['rows']
+        iAmount = 0.0
+        fAmount = 0.0
+        for i in self.table.body:
+            for j in i:
+                if(j['sToKey'] == self.order.vDexKey):
+                    iAmount += j['iVal']
+                    fAmount += j['fVal']
+        
+        out = iAmount + fAmount
+        self.getInfoLabel.setText(str(out) + " VTX" )
+    
      
     def getTable(self):
         out = ""
+        accum = ""
+        entries = []
         try:
-            if self.blockchain.net == 'test':
-                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'table', self.account.name, self.table.contract, self.table.table])
-            elif self.blockchain.net == 'main' :
-                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'table', self.account.name, self.table.contract, self.table.table])            
+            ub = 1000
+            lb = 0
+            count = 1
+                
+            while(1):
+                
+                if self.blockchain.net == 'test':
+        
+                    out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'table', self.account.name, self.table.contract, self.table.table, '-L', str(lb), '-U', str(ub), '-l', '1000000'])
+                    accum = accum + str(out) 
+                    o = json.loads(out)
+                    d = o['rows']
+                    entries.append(d)
+                    if len(d) == 0:
+                        break
+
+                elif self.blockchain.net == 'main' :
+                    out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'table', self.account.name, self.table.contract, self.table.table, '-U', {}, '-L', {}]).format(str(ub),str(lb))            
+                    accum = accum + str(out) 
+                    o = json.loads(out)
+                    d = o['rows']
+                    if len(d) == 0:
+                        break
+                ub = ub * (count + 1)
+                lb = ub - 1000   
         except:
             print('could not get table')
-        self.getInfoLabel.setText(str(out))    
+        self.table.body = entries   
+        self.getInfoLabel.setText(str(accum))    
     
     def openWallet(self):
          out = ''   
@@ -816,6 +868,7 @@ class GUI(QProcess):
 
     def getInfo(self):
         out = subprocess.check_output(['cleos', 'get', 'info'])
+        out = out.decode("utf-8") 
         self.getInfoLabel.setText(out)
         
     def getAccountDetails(self):    
@@ -824,6 +877,7 @@ class GUI(QProcess):
             out = subprocess.check_output(['cleos', 'get', 'account', self.account.name ])
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
+        out = out.decode("utf-8")     
         self.getInfoLabel.setText(str(out))   
     
     def getBalance(self):   
@@ -837,7 +891,9 @@ class GUI(QProcess):
     def listWallets(self):
         try:
             out = subprocess.check_output(['cleos', 'wallet', 'list'])
+            out = out.decode("utf-8") 
             self.getInfoLabel.setText(str(out))
+            
         except:
             print('cannot list wallets')
         
@@ -848,6 +904,7 @@ class GUI(QProcess):
              out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'block', self.blockchain.block.number])
         elif self.blockchain.net == 'main' :
              out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'block', self.blockchain.block.number])       
+        out = out.decode("utf-8")      
         self.getInfoLabel.setText(str(out))    
         
         
@@ -856,10 +913,12 @@ class GUI(QProcess):
         if self.blockchain.net == 'test':
             producerConv = 'https://' + self.blockchain.testProducer
             print(producerConv)
-            out = subprocess.check_output(['cleos', '--url', 'https://dc1.eosemerge.io:5443', 'get', 'info'])
+            out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'info'])
+            out = out.decode("utf-8") 
             self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
         elif self.blockchain.net == 'main' :
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
+            out = out.decode("utf-8") 
             self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)   
 
     def mainNet(self):
@@ -904,9 +963,11 @@ class GUI(QProcess):
         out = ''
         if self.blockchain.net == 'test':
             out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'info'])
+            self.blockchain.producer
             self.getInfoLabel.setText(str(out))   
         elif self.blockchain.net == 'main':
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
+            self.blockchain.producer
             self.getInfoLabel.setText(str(out))           
     
     def listProducers(self): 
@@ -914,9 +975,11 @@ class GUI(QProcess):
         try:
             if self.blockchain.net == 'test':
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'system', 'listproducers'])
+                self.blockchain.producer
                 self.getInfoLabel.setText(str(out))   
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'listproducers'])
+                self.blockchain.producer
                 self.getInfoLabel.setText(str(out))
         except:
             print("Could not get producer list")       
@@ -1031,10 +1094,14 @@ class Dialog(QDialog):
            self.parent.table.table = text
 
     def setContractName(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set Contract Name:", QLineEdit.Normal, QtCore.QDir.home().dirName())
        if ok and text != '':
            self.parent.table.contract = text
 
+    def setVdexKey(self):
+       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Key:", QLineEdit.Normal, QtCore.QDir.home().dirName())
+       if ok and text != '':
+          self.parent.order.vDexKey = text       
     
 def killKeosd():
     for p in psutil.process_iter(attrs=['pid', 'name']): 
