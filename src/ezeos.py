@@ -15,11 +15,10 @@ import psutil
 from pprint import pprint
 import uuid
 
-
 def resource_path(relative_path):
+
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
-
 
 home = os.environ['HOME'] 
 os.environ['EOS_SOURCE'] = home + "/eos"
@@ -151,11 +150,11 @@ class GUI(QProcess):
         self.setTableNameButton = QPushButton('Set Table Name')
         self.setContractNameButton = QPushButton('Set Contract Name')
         self.image = QLabel()
-        pixmap = QPixmap('volentix.gif')
         #pixmap = pixmap.scaledToWidth(150)
-        pixmap = pixmap.scaledToWidth(100)
-        #pixmap = pixmap.scaledToHeight(200)
-        self.image.setPixmap(pixmap)
+        self.image_path = resource_path("volentix.gif")
+        self.image.setPixmap(QtGui.QPixmap(self.image_path).scaledToWidth(50))
+        #pixmap = pixmap.scaledToWidth(100)
+        #self.image.setPixmap(pixmap)
         self.startBtn = QPushButton('OK')
         self.stopBtn = QPushButton('Cancel')
         self.label2 = QLabel("Test Net")
@@ -302,13 +301,7 @@ class GUI(QProcess):
         self.getInfoLabel.adjustSize()
         self.layout.addWidget(self.getInfoLabel)
         
-        
- 
-
-
-        
-        
-        
+    
         self.tabs = QTabWidget()
         self.tab1 = QWidget()    
         self.tab2 = QWidget()
@@ -425,6 +418,7 @@ class GUI(QProcess):
         self.vbox = QVBoxLayout()
         
         self.vbox.addWidget(self.image)
+        
          
      
         self.vbox.addLayout(self.layout)
@@ -438,7 +432,7 @@ class GUI(QProcess):
         self.stateChanged.connect(self.slotChanged)
         
         self.central = QWidget()
-       
+        
         self.central.setLayout(self.vbox)
         self.central.setWindowTitle("Volentix")
         self.central.show()
