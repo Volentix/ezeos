@@ -633,14 +633,25 @@ class GUI(QProcess):
     def loadEosioContract(self):
         # cleos set contract eosio build/contracts/eosio.bios -p eosio
         out = subprocess.check_output(['cleos', 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])   
+        for line in out:
+            print(line)
         self.getInfoLabel.setText(out)
     
     def showKeys(self):
         try:
-            out = subprocess.check_output(['cleos', 'wallet', 'keys']) 
-            self.getInfoLabel.setText(str(out))
+            out = subprocess.check_output(['cleos', 'wallet', 'keys'])
+            out = str(out)
+            self.wallet.activePublicKey  = out[8:61]
+            self.wallet.ownerPublicKey = out[68:-7]
+            print(self.wallet.activePublicKey)
+            print(self.wallet.ownerPublicKey)
+            self.getInfoLabel.setText("public keys copied" + out)
         except:
             print('could not show keys')
+    
+    
+    #["EOS4vmCCGtSnLaMMr9dB9jHefTxKMRRkqbNxqNjWdzUd2R2sRM9Pm", "EOS63xYPHEWkh8VZL3vNGtBJJcqhdRNZ23tmRbSh8YeqJ7r6QWPfU"]
+    
     
     def update_label(self):
         self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
@@ -786,11 +797,19 @@ class GUI(QProcess):
         
     def createAccount(self):
         out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'create', 'account', 'eosio', self.account.name, self.wallet.ownerPublicKey, self.wallet.activePublicKey, '-p', 'eosio' ])
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            permission = self.account.creator + '@active'
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram-kbytes', self.order.buyRam, '--transfer', '-p', permission])
+        try:
+            if self.blockchain.net == 'main':
+                print(self.wallet.ownerPublicKey)
+                print(self.wallet.activePublicKey)
+                permission = self.account.creator + '@active'
+                print(permission)
+                out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram', self.order.buyRam, '--transfer', '-p', permission])
+            elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+                permission = self.account.creator + '@active'
+                out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram', self.order.buyRam, '--transfer', '-p', permission])
+        except:
+            print('Could not create account')
+            out = 'could not create account'
         self.getInfoLabel.setText(str(out))
         
     def setContractSteps(self):
