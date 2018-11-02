@@ -121,6 +121,8 @@ class Order():
         self.buyRam = 0
         self.vDexKey = ""
         self.message = ""
+        self.wasm = ""
+        self.abi = ""
         
 class Table():
 
@@ -148,7 +150,7 @@ class GUI(QProcess):
         # Create an instance variable here (of type QTextEdit)
         self.startBtn = QPushButton('OK')
         self.setTableNameButton = QPushButton('Set Table Name')
-        self.setContractNameButton = QPushButton('Set Contract Name')
+        
         self.image = QLabel()
         #pixmap = pixmap.scaledToWidth(150)
         self.image_path = resource_path("volentix.gif")
@@ -159,12 +161,15 @@ class GUI(QProcess):
         self.stopBtn = QPushButton('Cancel')
         self.label2 = QLabel("Test Net")
         self.label = QLabel("Main Net")
+        self.setContractNameButton = QPushButton('Set Contract Name')
+        self.compileContractButton = QPushButton("Compile Contract")
+        self.pushContractButton = QPushButton("Push Contract")
         self.setMessageButton = QPushButton("Set Message")
         self.vtxTransferButton = QPushButton("Vtx Distribution Account to Trust Account/VDex Public Key")
         self.getVtxBalanceButton = QPushButton("Get Vtx Balance")
         self.setVDexPublicKeyButton = QPushButton("Set VDex Public Key")
         self.setPermissionObjectButton = QPushButton("Set Permission Object")
-        self.stakeBandwidthButton = QPushButton("Set Stake Bandwidth")
+        self.stakeBandwidthButton = QPushButton("Stake Bandwidth")
         self.testEncryptionButton = QPushButton("Test Encryption")
         self.TestFunctionButton = QPushButton("Test Function")
         self.createEosioWalletButton = QPushButton("Create Eosio Wallet and account")
@@ -186,7 +191,7 @@ class GUI(QProcess):
         self.setAccountOwnerButton = QPushButton("Set Account Owner")
         self.setCreatorAccountNameButton = QPushButton("Set Creator Account Name")
         self.setStakeCPUAmountButton = QPushButton("Set CPU Stake")
-        self.setStakeBandWidthAmountButton = QPushButton("Stake Bandwidth")
+        self.setStakeBandWidthAmountButton = QPushButton("Set Bandwidth Stake")
         self.buyRAMButton = QPushButton("Buy RAM")
         self.setBuyRAMAmountButton = QPushButton("Set RAM Stake")
         self.createAccountButton = QPushButton("Create Account")
@@ -257,7 +262,8 @@ class GUI(QProcess):
         self.getInfoButton.clicked.connect(self.getInfo)
         self.stopButton.clicked.connect(self.stopChain)
         self.startButton.clicked.connect(self.startChain)
-         
+        self.compileContractButton.clicked.connect(self.compileContract)
+        self.pushContractButton.clicked.connect(self.pushContract) 
         self.setWalletNameButton.clicked.connect(self.dialog.setWalletName)
         self.openWalletButton.clicked.connect(self.openWallet)
         self.createWalletButton.clicked.connect(self.createWallet)
@@ -275,7 +281,6 @@ class GUI(QProcess):
         self.buyRAMButton.clicked.connect(self.buyRAM)
         self.createAccountButton.clicked.connect(self.createAccount)
         self.openContractButton.clicked.connect(self.dialog.LoadContract)
-        self.openFileNameButton.clicked.connect(self.setContractSteps)
         self.issueButton.clicked.connect(self.issueCurrency)
         self.flushButton.clicked.connect(self.flushWallets)
         self.amountButton.clicked.connect(self.dialog.setAmount)
@@ -314,8 +319,8 @@ class GUI(QProcess):
         self.tabs.addTab(self.tab1, "Block chain")
         self.tabs.addTab(self.tab2, "Wallets")
         self.tabs.addTab(self.tab3, "Accounts")
-        self.tabs.addTab(self.tab4, "VolentixTGE")
-#         self.tabs.addTab(self.tab5, "eosio.token")
+        self.tabs.addTab(self.tab4, "vltxtgevtxtr : transfer get balance")
+        self.tabs.addTab(self.tab5, "contract")
 #         self.tabs.addTab(self.tab6, "test")
 #         
         self.tab1.layout = QVBoxLayout()
@@ -397,14 +402,19 @@ class GUI(QProcess):
         self.tab4.setLayout(self.tab4.layout)
     
         self.tab5.layout = QVBoxLayout()
+        #self.tab5.layout.addWidget(self.contractNameLabel)
+        self.tab5.layout.addWidget(self.openContractButton)
+        self.tab5.layout.addWidget(self.compileContractButton)
+        self.tab5.layout.addWidget(self.pushContractButton)
+        #self.tab5.layout.addWidget(self.openFileNameButton)
         
-        self.tab5.layout.addWidget(self.chooseCurrencyButton)
-        self.tab5.layout.addWidget(self.issueButton)
-        self.tab5.layout.addWidget(self.recipientNameButton)
-        self.tab5.layout.addWidget(self.amountButton)
-        self.tab5.layout.addWidget(self.issueToAccountButton) 
-        self.getActionsButton.clicked.connect(self.getActions)
-        self.tab5.layout.addWidget(self.transferToAccountButton)
+#         self.tab5.layout.addWidget(self.chooseCurrencyButton)
+#         self.tab5.layout.addWidget(self.issueButton)
+#         self.tab5.layout.addWidget(self.recipientNameButton)
+#         self.tab5.layout.addWidget(self.amountButton)
+#         self.tab5.layout.addWidget(self.issueToAccountButton) 
+#         self.getActionsButton.clicked.connect(self.getActions)
+#         self.tab5.layout.addWidget(self.transferToAccountButton)
         self.tab5.setLayout(self.tab5.layout)
         
         self.tab6.layout = QVBoxLayout() 
@@ -445,6 +455,35 @@ class GUI(QProcess):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+    
+    
+    def compileContract(self):
+        out = ''
+        print(self.order.wasm)
+        print(self.order.contract)
+        print(self.order.abi)
+        try:
+            out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wasm , self.order.contract, '--abigen' ])
+            out = 'compile success'
+        except:
+            out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp'
+        self.getInfoLabel.setText(str(out))
+    
+    
+    def pushContract(self):
+        out = ''
+        try:
+            if self.blockchain.net == 'test':
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'set', 'code', self.account.name, self.order.wasm])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'set', 'abi', self.account.name, self.order.abi])
+            elif self.blockchain.net == 'main' :
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'set', 'code', self.account.name, self.order.wasm])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'set', 'abi',self.account.name,  self.order.abi])            
+        except:
+            out = 'Cannot push contract'
+        print(str(out))
+        
+    
     
     def recordTransfer(self):
         object = ['112vtxledger', 'vtxdistrib', 'vtxtrust', 100.12345678, '', 'EOS81gkcgHo6Q12m8tjd2Ye5m18zbr4wGWh2bqU3XuLYrburgEf2T', 'test', 'nonce']
@@ -591,7 +630,7 @@ class GUI(QProcess):
             out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         except:
             print('could not stake bw')
-        self.getInfoLabel.setText(out)
+        self.getInfoLabel.setText(str(out))
     
     def testEncryption(self):
         key = ''
@@ -812,13 +851,7 @@ class GUI(QProcess):
             out = 'could not create account'
         self.getInfoLabel.setText(str(out))
         
-    def setContractSteps(self):
-        out = ''
-        if self.blockchain.net == 'local':
-            out = subprocess.check_output(['cleos', 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name ])
-        elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-            out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'set', 'contract', self.account.name, self.order.contract, '-p', self.account.name])
-        self.getInfoLabel.setText(out)
+    
    
     def issueCurrency(self):
         token1 = '{"issuer": "'
@@ -834,13 +867,13 @@ class GUI(QProcess):
     def buyRAM(self):
         try:       
             if self.blockchain.net == 'main':
-                 out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'buyram', self.account.name, self.account.receiver, self.order.buyRam])
+                 out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'buyram', self.account.creator, self.account.name, self.order.buyRam])
             elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
-                 out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'system', 'buyram', self.account.name, self.account.receiver, self.order.buyRam])
+                 out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'system', 'buyram', self.account.creator, self.account.name, self.order.buyRam])
             self.getInfoLabel.setText(out)
         except:
             self.getInfoLabel.setText('Could not buy RAM')
-
+        self.getInfoLabel.setText(out)    
     def issueToAccount(self):
         # cleos push action eosio.token issue '[ "user", "100.0000 SYS", "memo" ]' -p eosio
         token1 = '[ "'
@@ -1111,12 +1144,15 @@ class Dialog(QDialog):
             self.parent.account.receiver = text
             self.parent.getInfoLabel.setText(text)
      
-    def LoadContract(self):
-       options = QFileDialog.DontResolveSymlinks | QFileDialog.ShowDirsOnly
-       directory = QFileDialog.getExistingDirectory(self, "EZEOS", "Load Contact", options)
-       self.parent.order.contract = directory
-       self.parent.order.contractAccountName = os.path.basename(directory)
-       self.parent.getInfoLabel.setText(directory)
+    def LoadContract(self):    
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,".cpp contract file", options=options)
+        if fileName:
+            self.parent.order.contract = fileName
+            self.parent.order.wasm = fileName.replace('.cpp', '.wasm')
+            self.parent.order.abi = fileName.replace('.cpp', '.abi')    
+
    
     def chooseCurrency(self):
        text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, "")
@@ -1148,7 +1184,7 @@ class Dialog(QDialog):
        text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Message:", QLineEdit.Normal, "")
        if ok and text != '':
           self.parent.order.message = text       
-
+    
     
 def killKeosd():
     for p in psutil.process_iter(attrs=['pid', 'name']): 
