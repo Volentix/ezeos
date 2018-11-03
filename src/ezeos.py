@@ -122,6 +122,7 @@ class Order():
         self.vDexKey = ""
         self.message = ""
         self.wasm = ""
+        self.wast = ""
         self.abi = ""
         
 class Table():
@@ -464,6 +465,9 @@ class GUI(QProcess):
         print(self.order.abi)
         try:
             out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wasm , self.order.contract, '--abigen' ])
+            self.getInfoLabel.setText(str(out))
+            out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wast , self.order.contract, '--abigen' ])
+            self.getInfoLabel.setText(str(out))
             out = 'compile success'
         except:
             out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp'
@@ -471,7 +475,8 @@ class GUI(QProcess):
     
     
     def pushContract(self):
-        out = ''
+        out = 'compiling contract'
+        print(str(out))
         try:
             if self.blockchain.net == 'test':
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'set', 'code', self.account.name, self.order.wasm])
@@ -482,6 +487,7 @@ class GUI(QProcess):
         except:
             out = 'Cannot push contract'
         print(str(out))
+        self.getInfoLabel.setText(str(out))
         
     
     
@@ -494,9 +500,9 @@ class GUI(QProcess):
         out = ''
         try:
             if self.blockchain.net == 'test' :
-                out = subprocess.check_output(['c0leos', '--url', self.blockchain.testProducer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', '112vtxledger' + '@active'])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', self.account.name + '@active'])
             else:
-                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', '112vtxledger' + '@active'])
+                out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', self.account.name + '@active'])
         except:
             print('could not transfer')
              
@@ -627,10 +633,14 @@ class GUI(QProcess):
     def stakeBandwidth(self):
         out = ''
         try:
-            out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
+            if self.blockchain.net == 'main':
+                      out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
+            elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
+                      out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
         except:
-            print('could not stake bw')
+            out = 'cannot stake bandwith'
         self.getInfoLabel.setText(str(out))
+        
     
     def testEncryption(self):
         key = ''
@@ -719,7 +729,7 @@ class GUI(QProcess):
                 self.wallet.locked = False
                 #self.toggleWalletLock.setChecked(True) 
         except:
-            print('No Wallets')
+            print('')
             
     def isWalletLocked(self):
       out = subprocess.check_output(['cleos', 'wallet', 'list'])
@@ -865,6 +875,7 @@ class GUI(QProcess):
         self.getInfoLabel.setText(out)
     
     def buyRAM(self):
+        out = ''
         try:       
             if self.blockchain.net == 'main':
                  out = subprocess.check_output(['cleos', '-u', self.blockchain.producer, 'system', 'buyram', self.account.creator, self.account.name, self.order.buyRam])
@@ -873,7 +884,7 @@ class GUI(QProcess):
             self.getInfoLabel.setText(out)
         except:
             self.getInfoLabel.setText('Could not buy RAM')
-        self.getInfoLabel.setText(out)    
+        self.getInfoLabel.setText(str(out))    
     def issueToAccount(self):
         # cleos push action eosio.token issue '[ "user", "100.0000 SYS", "memo" ]' -p eosio
         token1 = '[ "'
@@ -1151,6 +1162,7 @@ class Dialog(QDialog):
         if fileName:
             self.parent.order.contract = fileName
             self.parent.order.wasm = fileName.replace('.cpp', '.wasm')
+            self.parent.order.wast = fileName.replace('.cpp', '.wast')
             self.parent.order.abi = fileName.replace('.cpp', '.abi')    
 
    
