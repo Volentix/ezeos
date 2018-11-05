@@ -14,6 +14,8 @@ import json
 import psutil
 from pprint import pprint
 import uuid
+import re, sys
+from moneywagon import AddressBalance
 
 def resource_path(relative_path):
 
@@ -24,7 +26,7 @@ home = os.environ['HOME']
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 
-os.environ['EZEOS_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
+os.environ['Volentix_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 # os.environ['CLEOS'] = "cleos"
 
 
@@ -91,9 +93,15 @@ class Wallet():
         self.activePublicKey = ""
         self.locked = False
         self.toConsole = True
+        self.btcaddress = "1DwzjjBvHCtr5Hn5kZs72KABfKnoFjJSMy"
+        self.ethaddress = "0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6"
+        self.xmraddress = "To Do"
+        self.ltcaddress = "LiBqkbnoVeRnrXCNetNDftYCE7Q3DDeDPL"
+        self.bchaddress = "CZ9bAtUBNkH3hzStsZr2283bRgPoGaqyuK"
+        self.dashaddress = "Xnn7aVPqxkqs8gDLZq1sNEU9v5A17HskM9"
+        self.neoaddress = "To do"
         
-   
-    
+           
 class Account():
     
     def __init__(self):
@@ -160,13 +168,41 @@ class GUI(QProcess):
         #self.image.setPixmap(pixmap)
         self.startBtn = QPushButton('OK')
         self.stopBtn = QPushButton('Cancel')
+        self.btcAddressLabel = QLabel("BTC Address")
+        self.ethAddressLabel = QLabel("ETH Address")
+        self.neoAddressLabel = QLabel("NEO Address")
+        self.xmrAddressLabel = QLabel("XMR Address")
+        self.ltcAddressLabel = QLabel("LTC Address")
+        self.dashAddressLabel = QLabel("DASH Address")
+        self.bchAddressLabel = QLabel("BCH Address")
+    
+        #self.btcAddressLabel.setFont(QtGui.QFont('Arial', 20))
+        #self.btcAddressLabel.setGeometry(QtCore.QRect(5, 10, 20, 20)) #(x, y, width, height) 
+        #self.btcAddressLabel.resize(100,100) 
+        #self.btcAddressLabel.move(100, 100)
         self.label2 = QLabel("Test Net")
         self.label = QLabel("Main Net")
+        self.setBTCAddressButton = QPushButton('Set BTC address')
+        self.getBTCBalanceButton = QPushButton('Get BTC balance')
+        self.setETHAddressButton = QPushButton('Set ETH address')
+        self.getETHBalanceButton = QPushButton('Get ETH balance')
+        self.setXMRAddressButton = QPushButton('Set XMR address')
+        self.getXMRBalanceButton = QPushButton('Get XMR balance')
+        self.setNEOAddressButton = QPushButton('Set NEO address')
+        self.getNEOBalanceButton = QPushButton('Get NEO balance')
+        self.setLTCAddressButton = QPushButton('Set LTC address')
+        self.getLTCBalanceButton = QPushButton('Get LTC balance')
+        self.setBCHAddressButton = QPushButton('Set BCH address')
+        self.getBCHBalanceButton = QPushButton('Get BCH balance')
+        self.setDASHAddressButton = QPushButton('Set DASH address')
+        self.getDASHBalanceButton = QPushButton('Get DASH balance')
+        
+        
         self.setContractNameButton = QPushButton('Set Contract Name')
         self.compileContractButton = QPushButton("Compile Contract")
         self.pushContractButton = QPushButton("Push Contract")
         self.setMessageButton = QPushButton("Set Message")
-        self.vtxTransferButton = QPushButton("Vtx Distribution Account to Trust Account/VDex Public Key")
+        self.vtxTransferButton = QPushButton("Vtx Distribution Account to VDex Public Key")
         self.getVtxBalanceButton = QPushButton("Get Vtx Balance")
         self.setVDexPublicKeyButton = QPushButton("Set VDex Public Key")
         self.setPermissionObjectButton = QPushButton("Set Permission Object")
@@ -302,6 +338,21 @@ class GUI(QProcess):
         self.createEosioWalletButton.clicked.connect(self.createEosioWallet)
         self.createEosioTokenAccountButton.clicked.connect(self.createEosioTokenAccount)
         self.stakeBandwidthButton.clicked.connect(self.stakeBandwidth)
+        self.setDASHAddressButton.clicked.connect(self.dialog.setDashAddress)
+        self.setBTCAddressButton.clicked.connect(self.dialog.setBtcAddress)
+        self.setETHAddressButton.clicked.connect(self.dialog.setEthAddress)
+        self.setXMRAddressButton.clicked.connect(self.dialog.setXmrAddress)
+        self.setNEOAddressButton.clicked.connect(self.dialog.setNeoAddress)
+        self.setLTCAddressButton.clicked.connect(self.dialog.setLtcAddress)
+        self.setBCHAddressButton.clicked.connect(self.dialog.setBchAddress)
+        self.getDASHBalanceButton.clicked.connect(self.getDashBalance)
+        self.getBTCBalanceButton.clicked.connect(self.getBtcBalance)
+        self.getETHBalanceButton.clicked.connect(self.getEthBalance)
+        self.getXMRBalanceButton.clicked.connect(self.getXmrBalance)
+        self.getNEOBalanceButton.clicked.connect(self.getNeoBalance)
+        self.getLTCBalanceButton.clicked.connect(self.getLtcBalance)
+        self.getBCHBalanceButton.clicked.connect(self.getBchBalance)
+        
         self.layout = QGridLayout()
         self.getInfoLabel.setFrameStyle(QFrame.Sunken | QFrame.StyledPanel)
         self.getInfoLabel.adjustSize()
@@ -316,13 +367,26 @@ class GUI(QProcess):
         self.tab5 = QWidget()
         self.tab5 = QWidget()
         self.tab6 = QWidget()
+        self.tab7 = QWidget()
+        self.tab8 = QWidget()
+        self.tab9 = QWidget()
+        self.tab10 = QWidget()
+        self.tab11 = QWidget()
+        self.tab12 = QWidget()
        
         self.tabs.addTab(self.tab1, "Block chain")
         self.tabs.addTab(self.tab2, "Wallets")
         self.tabs.addTab(self.tab3, "Accounts")
         self.tabs.addTab(self.tab4, "vltxtgevtxtr : transfer get balance")
         self.tabs.addTab(self.tab5, "contract")
-#         self.tabs.addTab(self.tab6, "test")
+        self.tabs.addTab(self.tab6, "BTC")
+        self.tabs.addTab(self.tab7, "ETH")
+        self.tabs.addTab(self.tab8, "XMR")
+        self.tabs.addTab(self.tab9, "NEO")
+        self.tabs.addTab(self.tab10, "LTC")
+        self.tabs.addTab(self.tab11, "BCH")
+        self.tabs.addTab(self.tab12, "DASH")
+        
 #         
         self.tab1.layout = QVBoxLayout()
         # self.tab1.layout.addWidget(self.stopButton)
@@ -419,9 +483,44 @@ class GUI(QProcess):
         self.tab5.setLayout(self.tab5.layout)
         
         self.tab6.layout = QVBoxLayout() 
-        self.tab6.layout.addWidget(self.setPermissionObjectButton)
-        self.tab6.layout.addWidget(self.testEncryptionButton)
+        self.tab6.layout.addWidget(self.setBTCAddressButton)
+        self.tab6.layout.addWidget(self.getBTCBalanceButton)
+        self.tab6.layout.addWidget(self.btcAddressLabel)
         self.tab6.setLayout(self.tab6.layout)
+        
+        
+        self.tab7.layout = QVBoxLayout()
+        self.tab7.layout.addWidget(self.setETHAddressButton)
+        self.tab7.layout.addWidget(self.getETHBalanceButton)
+        self.tab7.layout.addWidget(self.ethAddressLabel)
+        self.tab7.setLayout(self.tab7.layout)
+        self.tab8.layout = QVBoxLayout()
+        self.tab8.layout.addWidget(self.setXMRAddressButton)
+        self.tab8.layout.addWidget(self.getXMRBalanceButton)
+        self.tab8.layout.addWidget(self.xmrAddressLabel)
+        self.tab8.setLayout(self.tab8.layout)
+        self.tab9.layout = QVBoxLayout()
+        self.tab9.layout.addWidget(self.setNEOAddressButton)
+        self.tab9.layout.addWidget(self.getNEOBalanceButton)
+        self.tab9.layout.addWidget(self.neoAddressLabel)
+        self.tab9.setLayout(self.tab9.layout)
+        self.tab10.layout = QVBoxLayout()
+        self.tab10.layout.addWidget(self.setLTCAddressButton)
+        self.tab10.layout.addWidget(self.getLTCBalanceButton)
+        self.tab10.layout.addWidget(self.ltcAddressLabel)
+        self.tab10.setLayout(self.tab10.layout)
+        self.tab11.layout = QVBoxLayout()
+        self.tab11.layout.addWidget(self.setBCHAddressButton)
+        self.tab11.layout.addWidget(self.getBCHBalanceButton)
+        self.tab11.layout.addWidget(self.bchAddressLabel)
+        self.tab11.setLayout(self.tab11.layout)
+        self.tab12.layout = QVBoxLayout()
+        self.tab12.layout.addWidget(self.setDASHAddressButton)
+        self.tab12.layout.addWidget(self.getDASHBalanceButton)
+        self.tab12.layout.addWidget(self.dashAddressLabel)
+        self.tab12.setLayout(self.tab12.layout)
+        
+        
         
         self.layout.addWidget(self.tabs)
         self.hbox = QHBoxLayout()
@@ -446,11 +545,14 @@ class GUI(QProcess):
         
         self.central.setLayout(self.vbox)
         self.central.setWindowTitle("Volentix")
+        
         self.central.show()
         self.scrollAreaWidgetContents = self.tabs
         self.scrollArea = QScrollArea()
+        
         self.layout.addWidget(self.scrollArea)
         self.scrollArea.setGeometry(QtCore.QRect(5000, 5000, 5000, 5000))
+        self.central.resize(100, 100);
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.scrollArea.setWidgetResizable(True)
@@ -473,6 +575,70 @@ class GUI(QProcess):
             out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp'
         self.getInfoLabel.setText(str(out))
     
+    
+    def getBtcBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.btcaddress])
+        except:
+            out = 'Could not get a balance'
+        out = out + 'BTC'
+        self.getInfoLabel.setText(out)                                             
+    
+    def getEthBalance(self):
+        out = ''
+        try:
+             #python get-eth-balance.py -a 0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6
+            out = subprocess.check_output(['python', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' ETH')       
+    
+    def getXmrBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.xmraddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' XMR')       
+    
+    def getNeoBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.neoaddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' NEO')       
+    
+    def getLtcBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../ltc/get_balance.py', self.wallet.ltcaddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' LTC')       
+    
+    def getBchBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../bch/get_balance.py', self.wallet.bchaddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' BCH')       
+    
+    def getDashBalance(self):
+        out = ''
+        try:
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.dashaddress])
+        except:
+            out = 'Could not get a balance'
+        print(out)    
+        self.getInfoLabel.setText(out + ' DASH')       
     
     def pushContract(self):
         out = 'compiling contract'
@@ -712,9 +878,15 @@ class GUI(QProcess):
 #         if self.blockchain.running:
 #             self.toggleMainNet.setChecked(False)
 #             self.toggleTestNet.setChecked(False)
+       
         self.blockchain.producer = self.producerBox.currentText()
         self.blockchain.testProducer = self.testProducerBox.currentText()
-        
+        self.btcAddressLabel.setText('BTC Address: ' + self.wallet.btcaddress)
+        self.ethAddressLabel.setText('ETH Address: ' + self.wallet.ethaddress)
+        self.xmrAddressLabel.setText('XMR Address: ' + self.wallet.xmraddress)
+        self.neoAddressLabel.setText('NEO Address: ' + self.wallet.neoaddress)
+        self.ltcAddressLabel.setText('LTC Address: ' + self.wallet.ltcaddress)
+        self.bchAddressLabel.setText('BCH Address: ' + self.wallet.bchaddress)
         if (self.togglePasswordToConsole.isChecked()):
             self.wallet.toFile = False
             self.wallet.toConsole = True   
@@ -1078,73 +1250,73 @@ class Dialog(QDialog):
         self.parent = parent
         
     def setCreatorAccountName(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Account Creator Name:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Account Creator Name:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.account.creator = text
             self.parent.getInfoLabel.setText('Creator: ' + text)
         
     def setAccountOwner(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Account Owner Name:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Account Owner Name:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.account.owner = text
             self.parent.getInfoLabel.setText('Owner: ' + text)
         
     def setAccountName(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Account Name:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Account Name:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.account.name = text
             self.parent.getInfoLabel.setText('Account name: ' + text)
 
     def setBlockNumber(self):
-        value, ok = QInputDialog.getText(self, "EZEOS", "Set Block Number ", QLineEdit.Normal, '1')
+        value, ok = QInputDialog.getText(self, "Volentix", "Set Block Number ", QLineEdit.Normal, '1')
         if ok and value != 0:
             self.parent.blockchain.block.number = value 
             self.parent.getInfoLabel.setText(str(value))
             
     def setWalletName(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Wallet Name:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Wallet Name:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.wallet.name = text
             self.parent.getInfoLabel.setText(text)
 
     def getWord(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "", QLineEdit.Normal, "")
         if ok and text != '':            
             return text
         self.parent.getInfoLabel.setText(text)
     
     def setRecipientName(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Recipient Name:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Recipient Name:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.name = text
             self.parent.getInfoLabel.setText(text)
 
     def setAmount(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Amount:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Amount:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.amount = text 
             self.parent.getInfoLabel.setText(self.parent.order.amount)
     
     def setSendAmount(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Send Amount:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Send Amount:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.amount = text 
             self.parent.getInfoLabel.setText(self.parent.order.amount)
             
     def setStakeCPUAmount(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set CPU Stake:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set CPU Stake:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.stakeCPU = text 
             self.parent.getInfoLabel.setText(self.parent.order.stakeCPU)
             
     def setStakeBandWidthAmount(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Bandwidth Stake:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Bandwidth Stake:", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.order.stakeBandWidth = text 
             self.parent.getInfoLabel.setText(self.parent.order.stakeBandWidth)
             
     def setBuyRAMAmount(self):
-        text, ok = QInputDialog.getText(self, "EZEOS", "Set Ram Stake:", QLineEdit.Normal, '')
+        text, ok = QInputDialog.getText(self, "Volentix", "Set Ram Stake:", QLineEdit.Normal, '')
         if ok and text != '':
             self.parent.order.buyRam = text 
             self.parent.getInfoLabel.setText(self.parent.order.buyRam)
@@ -1167,37 +1339,73 @@ class Dialog(QDialog):
 
    
     def chooseCurrency(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Token Name:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Token Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.order.currency = text
            self.parent.getInfoLabel.setText(text)
     
     def setNodeosPath(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Nodeos Path:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Nodeos Path:", QLineEdit.Normal, "")
        if ok and text != '':
            blockchain.path = text
 
     def setTableName(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Table Name:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Table Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.table.table = text
 
     def setContractName(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set Contract Name:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Contract Name:", QLineEdit.Normal, "")
        if ok and text != '':
            self.parent.table.contract = text
 
     def setVdexKey(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Key:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set VDex Key:", QLineEdit.Normal, "")
        if ok and text != '':
           self.parent.order.vDexKey = text       
    
     def setMessage(self):
-       text, ok = QInputDialog.getText(self, "EZEOS", "Set VDex Message:", QLineEdit.Normal, "")
+       text, ok = QInputDialog.getText(self, "Volentix", "Set VDex Message:", QLineEdit.Normal, "")
        if ok and text != '':
           self.parent.order.message = text       
     
+    def setBtcAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set BTC Address:", QLineEdit.Normal, self.parent.wallet.btcaddress)
+       if ok and text != '':
+          self.parent.wallet.btcaddress = text
     
+    def setEthAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set ETH Address:", QLineEdit.Normal, self.parent.wallet.ethaddress)
+       if ok and text != '':
+          self.parent.wallet.ethaddress = text
+    
+    def setXmrAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Xmr Address:", QLineEdit.Normal, self.parent.wallet.xmraddress)
+       if ok and text != '':
+          self.parent.wallet.xmraddress = text
+    
+    def setNeoAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Neo Address:", QLineEdit.Normal, self.parent.wallet.neoaddress)
+       if ok and text != '':
+          self.parent.wallet.neoaddress = text
+    
+    def setLtcAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Ltc Address:", QLineEdit.Normal, self.parent.wallet.ltcaddress)
+       if ok and text != '':
+          self.parent.wallet.ltcaddress = text
+    
+    def setBchAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set Bch Address:", QLineEdit.Normal, self.parent.wallet.bchaddress)
+       if ok and text != '':
+         self.parent.wallet.bchaddress = text
+    
+    def setDashAddress(self):
+       text, ok = QInputDialog.getText(self, "Volentix", "Set DashAddress:", QLineEdit.Normal, self.parent.wallet.dashaddress)
+       if ok and text != '':
+         self.parent.wallet.dashaddress = text
+          
+          
+          
 def killKeosd():
     for p in psutil.process_iter(attrs=['pid', 'name']): 
         if 'keosd' in p.info['name']:

@@ -1,4 +1,9 @@
-import blockcypher
-balance = blockcypher.get_total_balance('XbtyRJuQxkg6C2UH92WqtS3bP854EPAySn', coin_symbol='dash')
-print(balance)
-print('DASH')
+import argparse
+from moneywagon import AddressBalance
+parser = argparse.ArgumentParser()
+parser.add_argument("address")
+args = parser.parse_args()
+print(args.address)
+if args.address != '':
+    out = AddressBalance().action('dash', args.address)
+print(out)
