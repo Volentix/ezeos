@@ -582,7 +582,7 @@ class GUI(QProcess):
             out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.btcaddress])
         except:
             out = 'Could not get a balance'
-        out = out + 'BTC'
+        out = str(out) + 'BTC'
         self.getInfoLabel.setText(out)                                             
     
     def getEthBalance(self):
