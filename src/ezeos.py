@@ -17,6 +17,7 @@ import uuid
 import re, sys
 from moneywagon import AddressBalance
 
+
 def resource_path(relative_path):
 
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -26,13 +27,13 @@ home = os.environ['HOME']
 os.environ['EOS_SOURCE'] = home + "/eos"
 os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 
-os.environ['Volentix_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
+# os.environ['Volentix_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 # os.environ['CLEOS'] = "cleos"
 
 
-class BlockChain():
+class BlockChain:
 
-    class Block():
+    class Block:
 
         def __init__(self):
             self.number = "1"
@@ -45,6 +46,7 @@ class BlockChain():
         self.testProducer = "http://api.kylin.alohaeos.com"
         self.producerList = [
                                     'https://api.eosnewyork.io:443',
+                                    'http://35.183.49.71:8888',
                                     'https://api.eosdetroit.io:443',
                                     'https://eos.greymass.com:443',
                                     'https://api.eosmetal.io:18890',
@@ -82,7 +84,7 @@ class BlockChain():
                                 ]
 
 
-class Wallet():
+class Wallet:
     
     def __init__(self):
         self.name = ""
@@ -102,7 +104,7 @@ class Wallet():
         self.neoaddress = "To do"
         
            
-class Account():
+class Account:
     
     def __init__(self):
         self.name = ""
@@ -113,10 +115,9 @@ class Account():
         self.creatorActiveKey = ""
         self.eosioPublicKey = "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
         self.eosioPrivateKey = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
-                            
+
     
-    
-class Order():
+class Order:
 
     def __init__(self):
         self.to = ""
@@ -132,8 +133,9 @@ class Order():
         self.wasm = ""
         self.wast = ""
         self.abi = ""
-        
-class Table():
+
+
+class Table:
 
     def __init__(self):
         self.contract = ""
@@ -1404,8 +1406,7 @@ class Dialog(QDialog):
        if ok and text != '':
          self.parent.wallet.dashaddress = text
           
-          
-          
+
 def killKeosd():
     for p in psutil.process_iter(attrs=['pid', 'name']): 
         if 'keosd' in p.info['name']:
@@ -1416,8 +1417,7 @@ def killKeosd():
 def main():
    
     app = QApplication(sys.argv)
-    app.setStyleSheet("QPushButton { background: white }")
-    
+
     qProcess = GUI()
     qProcess.setProcessChannelMode(QProcess.MergedChannels)
     qProcess.readyReadStandardOutput.connect(qProcess.readStdOutput)
