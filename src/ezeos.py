@@ -358,6 +358,7 @@ class GUI(QProcess):
         self.layout = QGridLayout()
         self.getInfoLabel.setFrameStyle(QFrame.Sunken | QFrame.StyledPanel)
         self.getInfoLabel.adjustSize()
+        self.getInfoLabel.setStyleSheet("color:black;")
         self.layout.addWidget(self.getInfoLabel)
         
     
