@@ -224,7 +224,8 @@ class GUI(QProcess):
         self.createWalletButton = QPushButton("Create Wallet")
 #         self.setOwnerKeyButton = QPushButton("Create Owner Keys")
 #         self.setActiveKeyButton = QPushButton("Create Active Keys")
-        self.importKeysButton = QPushButton("Import Keys To Wallet")
+        self.importKeysButton = QPushButton("Create and import Keys To Wallet")
+        self.importPrivateKeyButton = QPushButton("Import Private Key To Wallet")
         self.setAccountNameButton = QPushButton("Set Account Name")
         self.getTableButton = QPushButton("Get Table")
         self.setAccountOwnerButton = QPushButton("Set Account Owner")
@@ -309,6 +310,7 @@ class GUI(QProcess):
 #         self.setOwnerKeyButton.clicked.connect(self.setOwnerKey)
 #         self.setActiveKeyButton.clicked.connect(self.setActiveKey)
         self.importKeysButton.clicked.connect(self.importKeys)
+        self.importPrivateKeyButton.clicked.connect(self.importPrivateKey)
         self.vtxTransferButton.clicked.connect(self.recordTransfer)
         self.setAccountNameButton.clicked.connect(self.dialog.setAccountName)
         self.getTableButton.clicked.connect(self.getTable)
@@ -360,8 +362,7 @@ class GUI(QProcess):
         self.getInfoLabel.adjustSize()
         self.getInfoLabel.setStyleSheet("color:black;")
         self.layout.addWidget(self.getInfoLabel)
-        
-    
+
         self.tabs = QTabWidget()
         self.tab1 = QWidget()    
         self.tab2 = QWidget()
@@ -419,6 +420,7 @@ class GUI(QProcess):
 #         self.tab2.layout.addWidget(self.setOwnerKeyButton)
 #         self.tab2.layout.addWidget(self.setActiveKeyButton)
         self.tab2.layout.addWidget(self.importKeysButton)
+        self.tab2.layout.addWidget(self.importPrivateKeyButton)
         # self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
         self.tab2.layout.addWidget(self.showKeysButton)
         #self.tab2.layout.addWidget(self.flushButton)
@@ -1015,10 +1017,21 @@ class GUI(QProcess):
             subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
             subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
         except:
-            print('could not import keys')
+            print('could not create and import keys')
         
+        self.getInfoLabel.setText('Created and imported keys to wallet')
+
+    def importPrivateKey(self):
+        text, ok = QInputDialog.getText(self.dialog, "Volentix", "Enter the private key", QLineEdit.Normal, "")
+        if ok and text != '':
+            try:
+                subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', text])
+            except:
+                print('Could not import the key')
+                self.getInfoLabel.setText('Could not import the key')
+
         self.getInfoLabel.setText('Imported keys to wallet')
-        
+
     def createAccount(self):
         out = ''
         try:
