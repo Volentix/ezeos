@@ -46,7 +46,6 @@ class BlockChain:
         self.testProducer = "http://api.kylin.alohaeos.com"
         self.producerList = [
                                     'https://api.eosnewyork.io:443',
-                                    'http://35.183.49.71:8888',
                                     'https://api.eosdetroit.io:443',
                                     'https://eos.greymass.com:443',
                                     'https://api.eosmetal.io:18890',
@@ -79,6 +78,7 @@ class BlockChain:
                                 ]
         self.testProducerList = [
                                     'http://api.kylin.alohaeos.com',
+                                    'http://35.183.49.71:8888',
                                     'http://127.0.0.1:8888',
                                     'http://35.183.129.78:8080'
                                 ]
@@ -157,7 +157,7 @@ class GUI(QProcess):
         self.timer.timeout.connect(self.update_label)
         self.timer.start(100)
         self.dialog = Dialog(self)
-        frameStyle = QFrame.Sunken | QFrame.Panel  
+        frameStyle = QFrame.Sunken | QFrame.Panel
         # Create an instance variable here (of type QTextEdit)
         self.startBtn = QPushButton('OK')
         self.setTableNameButton = QPushButton('Set Table Name')
@@ -527,21 +527,15 @@ class GUI(QProcess):
         self.tab12.layout.addWidget(self.getDASHBalanceButton)
         self.tab12.layout.addWidget(self.dashAddressLabel)
         self.tab12.setLayout(self.tab12.layout)
-        
-        
-        
+
         self.layout.addWidget(self.tabs)
         self.hbox = QHBoxLayout()
             
         self.vbox = QVBoxLayout()
         
         self.vbox.addWidget(self.image)
-        
-         
      
         self.vbox.addLayout(self.layout)
-        
-        
       
         # self.vbox.addWidget(self.edit)
         self.vbox.addLayout(self.hbox)
@@ -567,7 +561,6 @@ class GUI(QProcess):
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
     
-    
     def compileContract(self):
         out = ''
         print(self.order.wasm)
@@ -579,74 +572,81 @@ class GUI(QProcess):
             out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wast , self.order.contract, '--abigen' ])
             self.getInfoLabel.setText(str(out))
             out = 'compile success'
-        except:
-            out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp'
-        self.getInfoLabel.setText(str(out))
-    
+        except Exception as e:
+            out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp: ' + str(e)
+        finally:
+            self.getInfoLabel.setText(str(out))
     
     def getBtcBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.btcaddress])
-        except:
-            out = 'Could not get a balance'
-        out = str(out) + 'BTC'
-        self.getInfoLabel.setText(out)                                             
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            out = str(out) + 'BTC'
+            self.getInfoLabel.setText(out)
     
     def getEthBalance(self):
         out = ''
         try:
              #python get-eth-balance.py -a 0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6
             out = subprocess.check_output(['python', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' ETH')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' ETH')
     
     def getXmrBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.xmraddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' XMR')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' XMR')
     
     def getNeoBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.neoaddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' NEO')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' NEO')
     
     def getLtcBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../ltc/get_balance.py', self.wallet.ltcaddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' LTC')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' LTC')
     
     def getBchBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../bch/get_balance.py', self.wallet.bchaddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' BCH')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' BCH')
     
     def getDashBalance(self):
         out = ''
         try:
             out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.dashaddress])
-        except:
-            out = 'Could not get a balance'
-        print(out)    
-        self.getInfoLabel.setText(out + ' DASH')       
+        except Exception as e:
+            out = 'Could not get a balance: ' + str(e)
+        finally:
+            print(out)
+            self.getInfoLabel.setText(out + ' DASH')
     
     def pushContract(self):
         out = 'compiling contract'
@@ -658,12 +658,11 @@ class GUI(QProcess):
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'set', 'code', self.account.name, self.order.wasm])
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'set', 'abi',self.account.name,  self.order.abi])            
-        except:
-            out = 'Cannot push contract'
-        print(str(out))
-        self.getInfoLabel.setText(str(out))
-        
-    
+        except Exception as e:
+            out = 'Cannot push contract:' + str(e)
+        finally:
+            print(str(out))
+            self.getInfoLabel.setText(str(out))
     
     def recordTransfer(self):
         object = ['112vtxledger', 'vtxdistrib', 'vtxtrust', 100.12345678, '', 'EOS81gkcgHo6Q12m8tjd2Ye5m18zbr4wGWh2bqU3XuLYrburgEf2T', 'test', 'nonce']
@@ -677,10 +676,11 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', self.account.name + '@active'])
             else:
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'push', 'action', self.account.name, 'rcrdtfr', object, '-p', self.account.name + '@active'])
-        except:
-            print('could not transfer')
-             
-        self.getInfoLabel.setText(str(out) + " VTX")
+        except Exception as e:
+            print('could not transfer:' + str(e))
+            out = 'Couldnot transfer: ' + str(e)
+        finally:
+            self.getInfoLabel.setText(str(out) + " VTX")
     
     def getVtxBalance(self):
         out = ""
@@ -727,20 +727,20 @@ class GUI(QProcess):
                         break
                ub = ub * (count + 1)
                lb = ub - 1000   
-        except:
-            print('could not get table')
-        self.table.body = entries   
-        self.getInfoLabel.setText(str(accum))    
+        except Exception as e:
+            print('could not get table:' + str(e))
+        finally:
+            self.table.body = entries
+            self.getInfoLabel.setText(str(accum))
     
     def openWallet(self):
          out = ''   
          try:
              out = subprocess.check_output(['cleos', 'wallet', 'open', '-n', self.wallet.name])
-             
-         except:
-             print('could not open wallet')
-         
-         self.getInfoLabel.setText(str(out))    
+         except Exception as e:
+             print('could not open wallet' + str(e))
+         finally:
+             self.getInfoLabel.setText(str(out))
     
     def slotChanged(self, newState):
         if newState == QProcess.NotRunning:
@@ -771,7 +771,7 @@ class GUI(QProcess):
 #         self.edit.append(string) 
 
     def createPermissionObject(self, actor, permission):
-        permissionobject = {'actor':actor, 'permission':permission}
+        permissionobject = {'actor': actor, 'permission': permission}
         return permissionobject
         
     def setPermissionObject(self):
@@ -801,8 +801,12 @@ class GUI(QProcess):
         return finalToken
     
     def setOwnerPermission(self):
-        out = subprocess.check_output(['cleos', 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
-        self.getInfoLabel.setText(out)
+        try:
+            out = subprocess.check_output(['cleos', 'set', 'account', 'permission', self.account.name, self.account.creator, self.wallet.activePublicKey, '-p', self.account.name, '@', self.account.creator])
+        except Exception as e:
+            out = 'Could not set permissions: ' + str(e)
+        finally:
+            self.getInfoLabel.setText(out)
 
     def stakeBandwidth(self):
         out = ''
@@ -811,10 +815,10 @@ class GUI(QProcess):
                       out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
             elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
                       out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'system', 'delegatebw', self.account.creator, self.account.name, self.order.stakeBandWidth, self.order.stakeCPU])
-        except:
-            out = 'cannot stake bandwith'
-        self.getInfoLabel.setText(str(out))
-        
+        except Exception as e:
+            out = 'cannot stake bandwith: ' + str(e)
+        finally:
+            self.getInfoLabel.setText(str(out))
     
     def testEncryption(self):
         key = ''
@@ -837,7 +841,12 @@ class GUI(QProcess):
 #         self.setOwnerKey()
 #         self.setActiveKey()
         self.importKeys()
-        subprocess.check_output(['cleos', 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])   
+        try:
+            subprocess.check_output(['cleos', 'create', 'account', 'eosio', 'eosio.token', self.wallet.ownerPublicKey, self.wallet.activePublicKey])
+        except Exception as e:
+            print('Could not create eosio token account' + str(e))
+        finally:
+            print('success')
         # cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
     
     def createEosioWallet(self):
@@ -848,7 +857,10 @@ class GUI(QProcess):
         self.setActiveKey()
         self.showKeys()
         # self.importKeys()
-        subprocess.check_output(['cleos', 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])   
+        try:
+            subprocess.check_output(['cleos', 'wallet', 'import', '-n', 'eosio', '--private-key', '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'])
+        except Exception as e:
+            print('Could not create eosio wallet' + str(e))
         self.account.name = 'eosio'
         out = self.createAccount()   
         self.getInfoLabel.setText(out)
