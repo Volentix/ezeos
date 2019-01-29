@@ -266,6 +266,7 @@ class GUI(QProcess):
         self.setBlockNumberButton = QPushButton("Set Block Number")
         self.getActionsButton = QPushButton("Get Actions")
         self.showKeysButton = QPushButton("Show Keys")
+        self.showPrivateKeysButton = QPushButton("Show Private Keys")
         self.listProducersButton = QPushButton("Get Block Producers")
         self.getProducerInfoButton = QPushButton("Get Block Producer Info")
         self.setNodeosPathButton = QPushButton("Set Nodeos Path -default:/usr/local/eosio/bin/nodeos)")
@@ -333,6 +334,7 @@ class GUI(QProcess):
         self.setBlockNumberButton.clicked.connect(self.dialog.setBlockNumber)
         self.getActionsButton.clicked.connect(self.getActions)
         self.showKeysButton.clicked.connect(self.showKeys)
+        self.showPrivateKeysButton.clicked.connect(self.showPrivateKeys)
         self.listProducersButton.clicked.connect(self.listProducers)
         self.getProducerInfoButton.clicked.connect(self.getProducerInfo)
         self.setSendAmountButton.clicked.connect(self.dialog.setSendAmount)
@@ -423,6 +425,7 @@ class GUI(QProcess):
         self.tab2.layout.addWidget(self.importPrivateKeyButton)
         # self.tab2.layout.addWidget(self.setWalletPublicKeysButton)
         self.tab2.layout.addWidget(self.showKeysButton)
+        self.tab2.layout.addWidget(self.showPrivateKeysButton)
         #self.tab2.layout.addWidget(self.flushButton)
         # self.tab2.layout.addWidget(self.createEosioWalletButton)
 
@@ -868,6 +871,19 @@ class GUI(QProcess):
             self.getInfoLabel.setText("public keys copied" + out)
         except:
             print('could not show keys')
+
+    def showPrivateKeys(self):
+        password, ok = QInputDialog.getText(self.dialog, "Volentix", "Enter the wallet password", QLineEdit.Normal, "")
+        if ok and password != '':
+            try:
+                out = subprocess.check_output(
+                    ['cleos', 'wallet', 'private_keys', '-n', self.wallet.name, '--password', password])
+                out = str(out)
+                print(out)
+                self.getInfoLabel.setText("Private keys: \n" + out)
+            except:
+                print('could not show private keys')
+                self.getInfoLabel.setText("Could not show private keys")
     
     
     #["EOS4vmCCGtSnLaMMr9dB9jHefTxKMRRkqbNxqNjWdzUd2R2sRM9Pm", "EOS63xYPHEWkh8VZL3vNGtBJJcqhdRNZ23tmRbSh8YeqJ7r6QWPfU"]
