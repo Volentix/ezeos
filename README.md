@@ -26,11 +26,13 @@ get tables and use a contract to transfer funds to a ledger.
 
 1. Install EOSIO (v1.4.1) in the `~/eos` directory
 3. Python3
-3. PyQt5
+3. pi3 install PyQt5
 2. pip3 install pexpect
 3. pip3 install requests
 4. pip3 install pyte
 5. pip3 install psutil
+6. pip3 install moneywagon
+7. pip3 install socketIO-client
 
 ## Usage
 
