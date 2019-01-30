@@ -366,7 +366,7 @@ class GUI(QProcess):
         self.layout.addWidget(self.getInfoLabel)
 
         self.tabs = QTabWidget()
-        self.tab1 = QWidget()    
+        self.tab1 = QWidget()
         self.tab2 = QWidget()
         self.tab3 = QWidget()    
         self.tab4 = QWidget()
@@ -379,7 +379,7 @@ class GUI(QProcess):
         self.tab10 = QWidget()
         self.tab11 = QWidget()
         self.tab12 = QWidget()
-       
+
         self.tabs.addTab(self.tab1, "Block chain")
         self.tabs.addTab(self.tab2, "Wallets")
         self.tabs.addTab(self.tab3, "Accounts")
@@ -1212,9 +1212,10 @@ class GUI(QProcess):
             elif self.blockchain.net == 'main' :
                  out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'block', self.blockchain.block.number])       
             out = out.decode("utf-8")
-        except:
-            print('Could not get block info')      
-        self.getInfoLabel.setText(str(out))    
+        except Exception as e:
+            print('Could not get block info' + str(e))
+        finally:
+            self.getInfoLabel.setText(str(out))
         
     def getProducerInfo(self): 
         out = ''
@@ -1229,8 +1230,8 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])
                 out = out.decode("utf-8") 
                 self.getInfoLabel.setText(self.blockchain.producer + '\n' + out)
-        except:
-            print('Could not get producer info')   
+        except Exception as e:
+            print('Could not get producer info' + str(e))
 
     def mainNet(self):
         if self.toggleMainNet.checkState() != 0:
@@ -1245,6 +1246,7 @@ class GUI(QProcess):
             self.getInfoLabel.setText("Off the main net")
 
             # self.blockchain.running = False
+
     def localNet(self):
         if self.toggleLocalNet.checkState() != 0:
             self.stopChain()
@@ -1292,8 +1294,8 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'system', 'listproducers'])
                 self.blockchain.producer
                 self.getInfoLabel.setText(str(out))
-        except:
-            print("Could not get producer list")       
+        except Exception as e:
+            print("Could not get producer list" + str(e))
             
     
 class Dialog(QDialog):
