@@ -867,10 +867,13 @@ class GUI(QProcess):
 
     def loadEosioContract(self):
         # cleos set contract eosio build/contracts/eosio.bios -p eosio
-        out = subprocess.check_output(['cleos', 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])   
-        for line in out:
-            print(line)
-        self.getInfoLabel.setText(out)
+        try:
+            out = subprocess.check_output(['cleos', 'set', 'contract', 'eosio', os.environ['EOS_SOURCE'] + '/build/contracts/eosio.bios', '-p', 'eosio@active'])
+            for line in out:
+                print(line)
+            self.getInfoLabel.setText(out)
+        except Exception as e:
+            print('Could not load the contract:' + str(e))
     
     def showKeys(self):
         try:
@@ -881,8 +884,8 @@ class GUI(QProcess):
             print(self.wallet.activePublicKey)
             print(self.wallet.ownerPublicKey)
             self.getInfoLabel.setText("public keys copied" + out)
-        except:
-            print('could not show keys')
+        except Exception as e:
+            print('could not show keys' + str(e))
 
     def showPrivateKeys(self):
         password, ok = QInputDialog.getText(self.dialog, "Volentix", "Enter the wallet password", QLineEdit.Normal, "")
@@ -893,8 +896,8 @@ class GUI(QProcess):
                 out = str(out)
                 print(out)
                 self.getInfoLabel.setText("Private keys: \n" + out)
-            except:
-                print('could not show private keys')
+            except Exception as e:
+                print('could not show private keys' + str(e))
                 self.getInfoLabel.setText("Could not show private keys")
     
     
@@ -933,17 +936,17 @@ class GUI(QProcess):
             else:
                 self.wallet.locked = False
                 #self.toggleWalletLock.setChecked(True) 
-        except:
-            print('')
+        except Exception as e:
+            print(str(e))
             
     def isWalletLocked(self):
-      out = subprocess.check_output(['cleos', 'wallet', 'list'])
-      out = out.decode("utf-8") 
-      index = out.find(self.wallet.name)
-      if(out[index + len(self.wallet.name) + 1] == '*'):
-          return False
-      else:
-          return True
+        out = subprocess.check_output(['cleos', 'wallet', 'list'])
+        out = out.decode("utf-8")
+        index = out.find(self.wallet.name)
+        if out[index + len(self.wallet.name) + 1] == '*':
+            return False
+        else:
+            return True
         
     def lockWallet(self):
         if self.wallet.name == '':
@@ -960,8 +963,8 @@ class GUI(QProcess):
                 word = ''
                 self.wallet.locked = False
         
-        except:
-            print('could not unlock wallet')
+        except Exception as e:
+            print('could not unlock wallet' + str(e))
             
     def getActions(self):
         out = ''
@@ -971,17 +974,18 @@ class GUI(QProcess):
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'actions', self.account.name ])
             
-        except:
-            print('could not get actions')
-        self.getInfoLabel.setText(str(out))
+        except Exception as e:
+            print('could not get actions' + str(e))
+        finally:
+            self.getInfoLabel.setText(str(out))
         
     def stopChain(self):    
         try:
             subprocess.check_output(['killall', '/usr/local/eosio/bin/nodeos'])
             self.getInfoLabel.setText('Chain stopped')
             self.blockchain.running = False
-        except:
-            self.getInfoLabel.setText('No chain running')
+        except Exception as e:
+            self.getInfoLabel.setText('No chain running' + str(e))
             self.blockchain.running = False
      
     def startChain(self):
@@ -991,8 +995,6 @@ class GUI(QProcess):
         self.getInfoLabel.setText('chain started')
         self.blockchain.running = True
         self.blockchain.net = 'local'
-          
-    
                     
     def setWalletPublicKeys(self):
         out = 'Owner Public Key: ' + '\n' + self.wallet.ownerPublicKey + '\n' + 'Active Public Key: ' + '\n' + self.wallet.activePublicKey + '\n' + 'Creator Key: ' + '\n' + self.account.creatorActiveKey 
@@ -1014,8 +1016,9 @@ class GUI(QProcess):
                 self.getInfoLabel.setText("Created wallet and saved password to home directory")
                 self.wallet.locked = False
  
-        except:
-            out = "could not create wallet"
+        except Exception as e:
+            out = "could not create wallet" + str(e)
+        finally:
             self.getInfoLabel.setText(str(out))
 
     def setOwnerKey(self):    
@@ -1037,26 +1040,26 @@ class GUI(QProcess):
                     subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.ownerPrivateKey, '--file', home + "/owner" + self.wallet.name])
                     subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', self.wallet.activePrivateKey, '--file', home + "/owner" + self.wallet.name])
             self.getInfoLabel.setText('Creating active keys')        
-        except:
-            print('cannot create keys')           
+        except Exception as e:
+            print('cannot create keys' + str(e))
         
     def importKeys(self):
         try:
             subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
             subprocess.check_output(['cleos', 'wallet', 'create_key', '-n', self.wallet.name])
-        except:
-            print('could not create and import keys')
-        
-        self.getInfoLabel.setText('Created and imported keys to wallet')
+        except Exception as e:
+            print('could not create and import keys' + str(e))
+        finally:
+            self.getInfoLabel.setText('Created and imported keys to wallet')
 
     def importPrivateKey(self):
         text, ok = QInputDialog.getText(self.dialog, "Volentix", "Enter the private key", QLineEdit.Normal, "")
         if ok and text != '':
             try:
                 subprocess.check_output(['cleos', 'wallet', 'import', '-n', self.wallet.name, '--private-key', text])
-            except:
-                print('Could not import the key')
-                self.getInfoLabel.setText('Could not import the key')
+            except Exception as e:
+                print('Could not import the key' + str(e))
+                self.getInfoLabel.setText('Could not import the key' + str(e))
 
         self.getInfoLabel.setText('Imported keys to wallet')
 
@@ -1072,10 +1075,11 @@ class GUI(QProcess):
             elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
                 permission = self.account.creator + '@active'
                 out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'system', 'newaccount', self.account.creator, self.account.name, self.wallet.ownerPublicKey , self.wallet.activePublicKey, '--stake-net', self.order.stakeBandWidth, '--stake-cpu', self.order.stakeCPU, '--buy-ram', self.order.buyRam, '--transfer', '-p', permission])
-        except:
-            print('Could not create account')
-            out = 'could not create account'
-        self.getInfoLabel.setText(str(out))
+        except Exception as e:
+            print('Could not create account' + str(e))
+            out = 'could not create account' + str(e)
+        finally:
+            self.getInfoLabel.setText(str(out))
         
     
    
@@ -1098,9 +1102,11 @@ class GUI(QProcess):
             elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
                  out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'system', 'buyram', self.account.creator, self.account.name, self.order.buyRam])
             self.getInfoLabel.setText(out)
-        except:
-            self.getInfoLabel.setText('Could not buy RAM')
-        self.getInfoLabel.setText(str(out))    
+        except Exception as e:
+            out = 'Could not buy RAM' + str(e)
+        finally:
+            self.getInfoLabel.setText(str(out))
+
     def issueToAccount(self):
         # cleos push action eosio.token issue '[ "user", "100.0000 SYS", "memo" ]' -p eosio
         token1 = '[ "'
@@ -1111,9 +1117,10 @@ class GUI(QProcess):
         finalToken = token1 + token2 + token3 + str(token4) + token5
         try:
             out = subprocess.check_output(['cleos', 'push', 'action', self.account.name, 'issue', finalToken, '-p', self.account.name])  # + '@active'])
-        except:
-            print('Could not issue to Account') 
-        self.getInfoLabel.setText(out)
+        except Exception as e:
+            print('Could not issue to Account' + str(e))
+        finally:
+            self.getInfoLabel.setText(out)
         
     def transferToAccount(self):
         token1 = '{"to": "'
@@ -1135,9 +1142,10 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'transfer', self.account.name, self.account.receiver, self.order.amount]) 
             elif self.blockchain.net == 'test' or self.blockchain.net == 'main': 
                 out = subprocess.check_output(['cleos', '-u', self.blockchain.testProducer, 'transfer', self.account.name, self.account.receiver, self.order.amount])
-        except:
-            print('cannot send funds')
-        self.getInfoLabel.setText(out)
+        except Exception as e:
+            print('cannot send funds' + str(e))
+        finally:
+            self.getInfoLabel.setText(out)
 
     def flushWallets(self):
         text, ok = QInputDialog.getText(self.dialog, "Move wallets directory", "save wallets to:", QLineEdit.Normal,'Absolute Path To Directory')
@@ -1156,10 +1164,10 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'info'])  
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'info'])    
-        except:
-            print('Could not get account details')     
-        self.getInfoLabel.setText(str(out))   
-        
+        except Exception as e:
+            print('Could not get account details' + str(e))
+        finally:
+            self.getInfoLabel.setText(str(out))
         
     def getAccountDetails(self):    
         out = ''
@@ -1169,9 +1177,10 @@ class GUI(QProcess):
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'account', self.account.name ])
             out = out.decode("utf-8")
-        except:
-            print('Could not get account details')     
-        self.getInfoLabel.setText(str(out))   
+        except Exception as e:
+            print('Could not get account details' + str(e))
+        finally:
+            self.getInfoLabel.setText(str(out))
     
     def getBalance(self):   
         out = ''
@@ -1180,9 +1189,10 @@ class GUI(QProcess):
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.testProducer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
             elif self.blockchain.net == 'main' :
                 out = subprocess.check_output(['cleos', '--url', self.blockchain.producer, 'get', 'currency', 'balance', 'eosio.token', self.account.name, self.order.currency ])
-        except:
-            print('could not get account info')       
-        self.getInfoLabel.setText(str(out))    
+        except Exception as e:
+            print('could not get account info' + str(e))
+        finally:
+            self.getInfoLabel.setText(str(out))
     
     def listWallets(self):
         try:
@@ -1190,8 +1200,8 @@ class GUI(QProcess):
             out = out.decode("utf-8") 
             self.getInfoLabel.setText(str(out))
             
-        except:
-            print('cannot list wallets')
+        except Exception as e:
+            print('cannot list wallets' + str(e))
         
     def getBlockInfo(self):    
         out = ''
