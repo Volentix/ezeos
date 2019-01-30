@@ -580,31 +580,33 @@ class GUI(QProcess):
     def getBtcBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.btcaddress])
+            out = subprocess.check_output(['python3', '../btc/get_balance.py', self.wallet.btcaddress])
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
-            out = str(out) + 'BTC'
+            out = str(out).replace('\\n', '\n') + ' BTC'
             self.getInfoLabel.setText(out)
     
     def getEthBalance(self):
         out = ''
         try:
              #python get-eth-balance.py -a 0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6
-            out = subprocess.check_output(['python', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress])
+            out = subprocess.check_output(['python3', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress])
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' ETH')
     
     def getXmrBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.xmraddress])
+            out = subprocess.check_output(['python3', '../btc/get_balance.py', self.wallet.xmraddress])
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' XMR')
     
