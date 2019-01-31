@@ -30,6 +30,8 @@ os.environ['EOS_NODEOS'] = home + "/.local/share/eosio/nodeos/"
 # os.environ['Volentix_SOURCE'] = home + "/eclipse-workspace/ezeos/src"
 # os.environ['CLEOS'] = "cleos"
 
+TIMEOUT = 3
+
 
 class BlockChain:
 
@@ -580,71 +582,98 @@ class GUI(QProcess):
     def getBtcBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.btcaddress])
+            out = subprocess.check_output(['python3', '../btc/get_balance.py', self.wallet.btcaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
-            out = 'Could not get a balance: ' + str(e)
+            out = 'Could not get a balance:\n' + str(e)
         finally:
-            out = str(out) + 'BTC'
+            out = str(out).replace('\\n', '\n') + ' BTC'
             self.getInfoLabel.setText(out)
     
     def getEthBalance(self):
         out = ''
         try:
              #python get-eth-balance.py -a 0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6
-            out = subprocess.check_output(['python', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress])
+            out = subprocess.check_output(['python3', '../ethereum/get-eth-balance.py', '-a', self.wallet.ethaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' ETH')
     
     def getXmrBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.xmraddress])
+            out = subprocess.check_output(['python3', '../btc/get_balance.py', self.wallet.xmraddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' XMR')
     
     def getNeoBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.neoaddress])
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.neoaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' NEO')
     
     def getLtcBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../ltc/get_balance.py', self.wallet.ltcaddress])
+            out = subprocess.check_output(['python', '../ltc/get_balance.py', self.wallet.ltcaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' LTC')
     
     def getBchBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../bch/get_balance.py', self.wallet.bchaddress])
+            out = subprocess.check_output(['python', '../bch/get_balance.py', self.wallet.bchaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' BCH')
     
     def getDashBalance(self):
         out = ''
         try:
-            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.dashaddress])
+            out = subprocess.check_output(['python', '../btc/get_balance.py', self.wallet.dashaddress], timeout=TIMEOUT)
+        except subprocess.TimeoutExpired as e:
+            print(e)
+            out = 'Timeout.\n' + str(e)
         except Exception as e:
             out = 'Could not get a balance: ' + str(e)
         finally:
+            out = str(out).replace('\\n', '\n')
             print(out)
             self.getInfoLabel.setText(out + ' DASH')
     
