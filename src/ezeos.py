@@ -562,18 +562,32 @@ class GUI(QProcess):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-    
+
     def compileContract(self):
         out = ''
         print(self.order.wasm)
         print(self.order.contract)
         print(self.order.abi)
+        flag = True
+
         try:
-            out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wasm , self.order.contract, '--abigen' ])
-            self.getInfoLabel.setText(str(out))
-            out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wast , self.order.contract, '--abigen' ])
-            self.getInfoLabel.setText(str(out))
-            out = 'compile success'
+            subprocess.call(['/usr/local/eosio.cdt/bin/eosio-cpp'])
+        except FileNotFoundError as e:
+                flag = False
+
+        try:
+            if flag:
+                out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wasm , self.order.contract, '--abigen'])
+                self.getInfoLabel.setText(str(out))
+                out = subprocess.check_output(['/usr/local/eosio.cdt/bin/eosio-cpp', '-o', self.order.wast , self.order.contract, '--abigen'])
+                self.getInfoLabel.setText(str(out))
+                out = 'compile success'
+            else:
+                out = subprocess.check_output(['eosio-cpp', '-o', self.order.wasm, self.order.contract, '--abigen'])
+                self.getInfoLabel.setText(str(out))
+                out = subprocess.check_output(['eosio-cpp', '-o', self.order.wast, self.order.contract, '--abigen'])
+                self.getInfoLabel.setText(str(out))
+                out = 'compile success'
         except Exception as e:
             out = 'Could not compile contract, please install /usr/local/eosio.cdt/bin/eosio-cpp: ' + str(e)
         finally:
