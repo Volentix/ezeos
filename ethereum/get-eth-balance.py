@@ -30,8 +30,8 @@ def build_url(account, testnet):
 def get_balance(url):
     html = requests.get(url, headers={'User-agent': 'Mozilla/5.0'}).text
     soup = BeautifulSoup(html, "html.parser")
-    table = soup.find("table", {"class" : "table"})
-    value = table.findAll('td')[1].text.split(' ')[0].strip()
+    table = soup.find("div", {"class": "card-body"})
+    value = table.find("div", {"class": "col-md-8"}).text.split(' ')[0].strip()
     return value
 
 
