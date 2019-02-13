@@ -49,6 +49,15 @@ python3 ezeos.py
 
 Happy hacking!
 
+# Screenshots
+
+<img width="653" alt="screen shot 2019-02-13 at 1 26 21 pm" src="https://user-images.githubusercontent.com/2269864/52734464-4e305880-2f93-11e9-8b9a-0d5287521d2d.png">
+<img width="648" alt="screen shot 2019-02-13 at 1 26 40 pm" src="https://user-images.githubusercontent.com/2269864/52734465-4e305880-2f93-11e9-81da-e119a818bcce.png">
+<img width="652" alt="screen shot 2019-02-13 at 1 26 49 pm" src="https://user-images.githubusercontent.com/2269864/52734466-4ec8ef00-2f93-11e9-957f-016aace0ec9e.png">
+<img width="653" alt="screen shot 2019-02-13 at 1 27 46 pm" src="https://user-images.githubusercontent.com/2269864/52734470-4ffa1c00-2f93-11e9-895e-04f94c00f609.png">
+<img width="648" alt="screen shot 2019-02-13 at 1 27 55 pm" src="https://user-images.githubusercontent.com/2269864/52734471-4ffa1c00-2f93-11e9-895f-086935123f12.png">
+
+
 ## Maintainers
 
 [@sylvaincormier](https://github.com/sylvaincormier)
