@@ -1375,7 +1375,7 @@ class Dialog(QDialog):
             self.parent.getInfoLabel.setText('Account name: ' + text)
 
     def setWalletDir(self):
-        text, ok = QInputDialog.getText(self, "Volentix", "Set wallet default directory:", QLineEdit.Normal, "")
+        text, ok = QInputDialog.getText(self, "Volentix", "Set wallet default directory. \nYou have to provide the full path, for example: '/Users/username/Desktop':\n", QLineEdit.Normal, "")
         if ok and text != '':
             self.parent.wallet.dir = text
             stop = stopKeosd()
