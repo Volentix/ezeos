@@ -97,7 +97,7 @@ class Wallet:
         self.activePublicKey = ""
         self.locked = False
         self.toConsole = True
-        self.dir = ""
+        self.dir = "~/eosio-wallet/"
         self.btcaddress = "1DwzjjBvHCtr5Hn5kZs72KABfKnoFjJSMy"
         self.ethaddress = "0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6"
         self.xmraddress = "To Do"
@@ -230,6 +230,7 @@ class GUI(QProcess):
         self.importKeysButton = QPushButton("Create and import Keys To Wallet")
         self.importPrivateKeyButton = QPushButton("Import Private Key To Wallet")
         self.setAccountNameButton = QPushButton("Set Account Name")
+        self.setWalletDirButton = QPushButton("Set Wallet Directory")
         self.getTableButton = QPushButton("Get Table")
         self.setAccountOwnerButton = QPushButton("Set Account Owner")
         self.setCreatorAccountNameButton = QPushButton("Set Creator Account Name")
@@ -319,6 +320,7 @@ class GUI(QProcess):
         self.importPrivateKeyButton.clicked.connect(self.importPrivateKey)
         self.vtxTransferButton.clicked.connect(self.recordTransfer)
         self.setAccountNameButton.clicked.connect(self.dialog.setAccountName)
+        self.setWalletDirButton.clicked.connect(self.dialog.setWalletDir)
         self.getTableButton.clicked.connect(self.getTable)
         self.setAccountOwnerButton.clicked.connect(self.dialog.setAccountOwner) 
         self.setCreatorAccountNameButton.clicked.connect(self.dialog.setCreatorAccountName)
@@ -417,6 +419,7 @@ class GUI(QProcess):
        
         self.tab2.layout = QVBoxLayout()
         self.tab2.layout.addWidget(self.walletDirLabel)
+        self.tab2.layout.addWidget(self.setWalletDirButton)
         self.tab2.layout.addWidget(self.togglePasswordToConsole)
 #         self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.toggleWalletLock) 
@@ -1344,14 +1347,6 @@ class GUI(QProcess):
                 self.getInfoLabel.setText(str(out))
         except Exception as e:
             print("Could not get producer list" + str(e))
-
-    def stopKeosd(self):
-        try:
-            out = subprocess.check_output(['cleos', 'wallet', 'stop'])
-        except Exception as e:
-            print('Could not stop keosd' + str(e))
-        finally:
-            self.getInfoLabel.setText("keosd stop: " + str(out))
             
     
 class Dialog(QDialog):
@@ -1378,6 +1373,14 @@ class Dialog(QDialog):
         if ok and text != '':
             self.parent.account.name = text
             self.parent.getInfoLabel.setText('Account name: ' + text)
+
+    def setWalletDir(self):
+        text, ok = QInputDialog.getText(self, "Volentix", "Set wallet default directory:", QLineEdit.Normal, "")
+        if ok and text != '':
+            self.parent.wallet.dir = text
+            stop = stopKeosd()
+            run = runKeosd(self.parent.wallet.dir)
+            self.parent.getInfoLabel.setText('Default wallet directory changed to: %s\nStop keosd: %sRun keosd with new wallet dir PID: %s\n' % (text, stop, run))
 
     def setBlockNumber(self):
         value, ok = QInputDialog.getText(self, "Volentix", "Set Block Number ", QLineEdit.Normal, '1')
@@ -1522,6 +1525,26 @@ def killKeosd():
         if 'keosd' in p.info['name']:
             pid = str(p.info['pid'])
             out = subprocess.check_output(['kill', pid])        
+
+
+def stopKeosd():
+    try:
+        out = subprocess.check_output(['cleos', 'wallet', 'stop'])
+    except Exception as e:
+        print('Could not stop keosd' + str(e))
+        out = "Could not stop keosd" + str(e)
+    finally:
+        return str(out, 'utf-8')
+
+
+def runKeosd(dir):
+    try:
+        out = os.spawnl(os.P_NOWAIT, 'keosd', '--wallet-dir', dir)
+    except Exception as e:
+        print('Could not run keosd ' + str(e))
+        out = "Could not run keosd " + str(e)
+    finally:
+        return str(out)
 
 
 def main():
