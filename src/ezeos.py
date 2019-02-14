@@ -97,6 +97,7 @@ class Wallet:
         self.activePublicKey = ""
         self.locked = False
         self.toConsole = True
+        self.dir = ""
         self.btcaddress = "1DwzjjBvHCtr5Hn5kZs72KABfKnoFjJSMy"
         self.ethaddress = "0x0366BfD5eDd7C257f2dcf4d4f1AB6196F03A0Bf6"
         self.xmraddress = "To Do"
@@ -245,6 +246,8 @@ class GUI(QProcess):
         self.getInfoLabel.setFrameStyle(frameStyle)
         self.walletNameLabel = QLabel()
         self.walletNameLabel.setFrameStyle(frameStyle)
+        self.walletDirLabel = QLabel()
+        self.walletDirLabel.setFrameStyle(frameStyle)
         self.accountNameLabel = QLabel()
         self.accountNameLabel.setFrameStyle(frameStyle)
         self.contractNameLabel = QLabel()
@@ -413,6 +416,7 @@ class GUI(QProcess):
         self.tab1.setLayout(self.tab1.layout)
        
         self.tab2.layout = QVBoxLayout()
+        self.tab2.layout.addWidget(self.walletDirLabel)
         self.tab2.layout.addWidget(self.togglePasswordToConsole)
 #         self.tab2.layout.addWidget(self.walletNameLabel)
         self.tab2.layout.addWidget(self.toggleWalletLock) 
@@ -948,6 +952,7 @@ class GUI(QProcess):
     
     
     def update_label(self):
+        self.walletDirLabel.setText('Wallet dir: ' + self.wallet.dir)
         self.walletNameLabel.setText('Wallet Name: ' + self.wallet.name)
         self.accountNameLabel.setText('Account Name: ' + self.account.name)
         self.creatorNameLabel.setText('Creator Account Name: ' + self.account.creator)
@@ -1339,6 +1344,14 @@ class GUI(QProcess):
                 self.getInfoLabel.setText(str(out))
         except Exception as e:
             print("Could not get producer list" + str(e))
+
+    def stopKeosd(self):
+        try:
+            out = subprocess.check_output(['cleos', 'wallet', 'stop'])
+        except Exception as e:
+            print('Could not stop keosd' + str(e))
+        finally:
+            self.getInfoLabel.setText("keosd stop: " + str(out))
             
     
 class Dialog(QDialog):
