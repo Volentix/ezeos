@@ -43,7 +43,7 @@ class BlockChain:
     def __init__(self):
         
         self.net = ['main', 'test']
-        self.block = self.Block()
+        self.block = self.Block()https://api.eosnewyork.io:443
         self.producer = "https://api.eosnewyork.io:443"
         self.testProducer = "http://api.kylin.alohaeos.com"
         self.producerList = [
@@ -124,7 +124,7 @@ class Order:
 
     def __init__(self):
         self.to = ""
-        self.amount = 0.00000000
+        self.amount = 0.000000000000
         self.contract = ""
         self.currency = ""
         self.contractAccountName = ""
@@ -1137,7 +1137,7 @@ class GUI(QProcess):
     def issueCurrency(self):
         token1 = '{"issuer": "'
         token2 = self.account.name
-        token3 = '", "maximum_supply": "1000000.0000 '
+        token3 = '", "maximum_supply": "1000000.00000000 '
         token4 = self.order.currency
         token5 = '", "can_freeze": 1, "can_recall": 1, "can_whitelist": 1}'
         finalToken = token1 + token2 + token3 + token4 + token5
@@ -1159,7 +1159,7 @@ class GUI(QProcess):
             self.getInfoLabel.setText(str(out))
 
     def issueToAccount(self):
-        # cleos push action eosio.token issue '[ "user", "100.0000 SYS", "memo" ]' -p eosio
+        # cleos push action eosio.token issue '[ "user", "100.00000000 SYS", "memo" ]' -p eosio
         token1 = '[ "'
         token2 = self.order.name
         token3 = '", "'
