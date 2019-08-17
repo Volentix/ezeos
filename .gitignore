@@ -1,3 +1,11 @@
-.idea/
 .vscode
-*.pyc
+.idea
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+test.py
+dist/
+build/
+.DS_Store
