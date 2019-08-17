@@ -4,15 +4,15 @@
 [![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.png?v=103)](https://github.com/ellerbrock/open-source-badges/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2F4ban%2Fezeos.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2F4ban%2Fezeos?ref=badge_shield)
 
 #### _A simple testing/learning tool for EOS._
 
 ## Table of Contents
-
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
-- [Maintainers](#maintainers)
+- [Screenshots](#screenshots)
 - [Contribute](#contribute)
 - [License](#license)
 
@@ -23,24 +23,29 @@ This version does not create a local node for you, but you can connect to it if 
 You can explore the EOSIO blockchain, create wallets and import keys, create accounts, view account balance,
 get tables and use a contract to transfer funds to a ledger. 
 
+## Install
 
-1. Install EOSIO (v1.4.1) in the `~/eos` directory
-3. Python3
-3. pi3 install PyQt5
-2. pip3 install pexpect
-3. pip3 install requests
-4. pip3 install pyte
-5. pip3 install psutil
-6. pip3 install moneywagon
-7. pip3 install socketIO-client
+> Requirements: EOS, EOS.CDT, Python3
+
+* For installing EOS and EOS.CDT visit the [wiki](https://github.com/4ban/ezeos/wiki)
+* install python>=3.6
+
+if you want to use more than 4 default themes, install `ttkthemes` (optional, recommended)
+* pip3 install ttkthemes
+
+There is a possibility that you have to install additional libraries:
+* pip3 install beautifulsoup4
+* pip3 install moneywagon
+* pip3 install requests
+
+For the further update:
+> * pip3 install Pillow
+> * pip3 install SocketIO-client
+> * pip3 install pyte
 
 ## Usage
 
 At the root of this project:
-
-```
-cd src
-```
 
 Run:
 ```
@@ -49,18 +54,14 @@ python3 ezeos.py
 
 Happy hacking!
 
-# Screenshots
+## Screenshots
 
-<img width="653" alt="screen shot 2019-02-13 at 1 26 21 pm" src="https://user-images.githubusercontent.com/2269864/52734464-4e305880-2f93-11e9-8b9a-0d5287521d2d.png">
-<img width="648" alt="screen shot 2019-02-13 at 1 26 40 pm" src="https://user-images.githubusercontent.com/2269864/52734465-4e305880-2f93-11e9-81da-e119a818bcce.png">
-<img width="652" alt="screen shot 2019-02-13 at 1 26 49 pm" src="https://user-images.githubusercontent.com/2269864/52734466-4ec8ef00-2f93-11e9-957f-016aace0ec9e.png">
-<img width="653" alt="screen shot 2019-02-13 at 1 27 46 pm" src="https://user-images.githubusercontent.com/2269864/52734470-4ffa1c00-2f93-11e9-895e-04f94c00f609.png">
-<img width="648" alt="screen shot 2019-02-13 at 1 27 55 pm" src="https://user-images.githubusercontent.com/2269864/52734471-4ffa1c00-2f93-11e9-895f-086935123f12.png">
+<img width="980" alt="screen shot 2019-02-13 at 1 10 11 pm" src="https://user-images.githubusercontent.com/2269864/52733675-453e8780-2f91-11e9-92c4-3eaefd4c7c35.png">
+<img width="978" alt="screen shot 2019-02-13 at 1 10 26 pm" src="https://user-images.githubusercontent.com/2269864/52733676-453e8780-2f91-11e9-84b8-e28f1767507d.png">
+<img width="979" alt="screen shot 2019-02-13 at 1 10 49 pm" src="https://user-images.githubusercontent.com/2269864/52733677-453e8780-2f91-11e9-8fc3-8eef87e098cb.png">
+<img width="981" alt="screen shot 2019-02-13 at 1 10 57 pm" src="https://user-images.githubusercontent.com/2269864/52733678-453e8780-2f91-11e9-99ad-e4509c7014f0.png">
+<img width="979" alt="screen shot 2019-02-13 at 1 11 14 pm" src="https://user-images.githubusercontent.com/2269864/52733679-466fb480-2f91-11e9-93ab-49eee41ef516.png">
 
-
-## Maintainers
-
-[@sylvaincormier](https://github.com/sylvaincormier)
 
 ## Contribute
 
@@ -73,3 +74,8 @@ Small note: If editing the README, please conform to the [standard-readme](https
 ## License
 
 MIT © 2018 VolentixLabs
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2F4ban%2Fezeos.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2F4ban%2Fezeos?ref=badge_large)
+
+## Cross repo
+[Volentix ezeos](https://github.com/Volentix/ezeos2)
